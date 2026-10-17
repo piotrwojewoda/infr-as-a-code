@@ -49,14 +49,13 @@ controller:
       valueFrom:
         secretKeyRef: { name: jenkins-github, key: token }
 
+  systemMessage: "Jenkins on k3s @ Raspberry Pi (malina) - configured as code"
+
   JCasC:
     enabled: true
     defaultConfig: true
     configScripts:
       platform-config: |
-        jenkins:
-          systemMessage: "Jenkins on k3s @ Raspberry Pi (malina) - configured as code"
-          numExecutors: 0
         credentials:
           system:
             domainCredentials:

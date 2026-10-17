@@ -17,9 +17,9 @@ certificate. US3 (the pipeline) comes last because it needs US1+US2+US4.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Create repository layout in `infr-as-a-code`: `clusters/malina/{bootstrap,infrastructure,apps,values}`, `charts/demo-symfony`, `.gitignore` (must exclude any `*secret*.yaml` local files, `.env.local`, `vendor/`)
-- [ ] T002 [P] Write root `README.md` (platform overview, links to specs, quickstart)
-- [ ] T003 [P] Write `AGENTS.md` (repo conventions for agents: GitOps flow, no-secrets rule, how to bump a release)
+- [x] T001 Create repository layout in `infr-as-a-code`: `clusters/malina/{bootstrap,infrastructure,apps,values}`, `charts/demo-symfony`, `.gitignore` (must exclude any `*secret*.yaml` local files, `.env.local`, `vendor/`)
+- [x] T002 [P] Write root `README.md` (platform overview, links to specs, quickstart)
+- [x] T003 [P] Write `AGENTS.md` (repo conventions for agents: GitOps flow, no-secrets rule, how to bump a release)
 
 ---
 
@@ -29,8 +29,8 @@ certificate. US3 (the pipeline) comes last because it needs US1+US2+US4.
 
 **Independent Test**: `kubectl get nodes` → `Ready`; TLS handshake on 443 works.
 
-- [ ] T004 [US1] Write `clusters/malina/bootstrap/00-install-k3s.sh` (install k3s with `--write-kubeconfig-mode 644`, wait for Ready, install Helm 3, copy kubeconfig to the user)
-- [ ] T005 [US1] Run `00-install-k3s.sh` on the Pi and verify: `kubectl get nodes` shows `malina Ready`
+- [x] T004 [US1] Write `clusters/malina/bootstrap/00-install-k3s.sh` (install k3s with `--write-kubeconfig-mode 644`, wait for Ready, install Helm 3, copy kubeconfig to the user)
+- [x] T005 [US1] Run `00-install-k3s.sh` on the Pi and verify: `kubectl get nodes` shows `malina Ready`
 - [ ] T006 [US1] Add Traefik global HTTP→HTTPS redirect via `HelmChartConfig` in `clusters/malina/infrastructure/traefik-config.yaml` and apply it; verify port 80 and 443 answer
 
 **Checkpoint**: `curl -k https://192.168.68.52` returns a Traefik response (404 default backend) over TLS.
@@ -74,11 +74,11 @@ certificate. US3 (the pipeline) comes last because it needs US1+US2+US4.
 
 **Independent Test**: change the start page text, merge to `main`, see it live without touching the cluster.
 
-- [ ] T016 [US3] Scaffold Symfony 8 skeleton in `demo-symfony-k3s` (PHP `>=8.5`, twig, doctrine/orm + pgsql, apache-pack); add `HomeController` (`/` start page showing Symfony + PHP version, deployed image tag, DB status line; `/healthz` for probes)
-- [ ] T017 [P] [US3] Write `Dockerfile` (multi-stage: `composer:2` + `php:8.5-cli` vendor stage → `php:8.5-apache-trixie` runtime, `APP_ENV=prod`, document root `public/`) + `.dockerignore` in `demo-symfony-k3s`
-- [ ] T018 [P] [US3] Write `Jenkinsfile` in `demo-symfony-k3s`: Kaniko pod (kaniko + git containers) → build/push `ghcr.io/piotrwojewoda/demo-symfony-k3s:<sha>` + `:latest` → bump `image.tag` in `clusters/malina/values/demo-symfony.yaml` → commit + push
-- [ ] T019 [US3] Write Helm chart `charts/demo-symfony/` (deployment with env `DATABASE_URL`/`APP_SECRET`/`APP_VERSION` from secret + tag, probes via `/healthz`, service :80, ingress `demo.kreciowo.pl` + TLS, imagePullSecrets `ghcr-pull`, resources per data-model)
-- [ ] T020 [US3] Write `clusters/malina/values/demo-symfony.yaml` with initial `image.tag: latest` and `clusters/malina/apps/demo-postgres.yaml` + `clusters/malina/apps/demo-symfony.yaml` (multi-source contract from contracts/gitops.md)
+- [x] T016 [US3] Scaffold Symfony 8 skeleton in `demo-symfony-k3s` (PHP `>=8.5`, twig, doctrine/orm + pgsql, apache-pack); add `HomeController` (`/` start page showing Symfony + PHP version, deployed image tag, DB status line; `/healthz` for probes)
+- [x] T017 [P] [US3] Write `Dockerfile` (multi-stage: `composer:2` + `php:8.5-cli` vendor stage → `php:8.5-apache-trixie` runtime, `APP_ENV=prod`, document root `public/`) + `.dockerignore` in `demo-symfony-k3s`
+- [x] T018 [P] [US3] Write `Jenkinsfile` in `demo-symfony-k3s`: Kaniko pod (kaniko + git containers) → build/push `ghcr.io/piotrwojewoda/demo-symfony-k3s:<sha>` + `:latest` → bump `image.tag` in `clusters/malina/values/demo-symfony.yaml` → commit + push
+- [x] T019 [US3] Write Helm chart `charts/demo-symfony/` (deployment with env `DATABASE_URL`/`APP_SECRET`/`APP_VERSION` from secret + tag, probes via `/healthz`, service :80, ingress `demo.kreciowo.pl` + TLS, imagePullSecrets `ghcr-pull`, resources per data-model)
+- [x] T020 [US3] Write `clusters/malina/values/demo-symfony.yaml` with initial `image.tag: latest` and `clusters/malina/apps/demo-postgres.yaml` + `clusters/malina/apps/demo-symfony.yaml` (multi-source contract from contracts/gitops.md)
 - [ ] T021 [US3] Push both repositories to GitHub; run the Jenkins job once manually for the first image; verify ArgoCD syncs and `https://demo.kreciowo.pl` shows the start page
 - [ ] T022 [US3] End-to-end test: change the welcome text on a branch, merge to `main`, verify the new version appears live in ≤ 15 minutes with zero manual steps
 
