@@ -34,7 +34,7 @@ On every computer that should reach the platform, add to `/etc/hosts`:
 
 | Task | Where / How |
 |------|-------------|
-| See the demo app | `https://demo.kreciowo.pl` (accept the dummy certificate) |
+| See the demo app | `https://kreciowo.pl` or `https://www.kreciowo.pl` (**real certificate**, home.pl) — or `https://demo.kreciowo.pl` with the dummy cert |
 | Jenkins UI | `https://jenkins.kreciowo.pl` (admin password: see runbook) |
 | ArgoCD UI | `https://argocd.kreciowo.pl` |
 | Deploy a new app version | merge a pull request to `main` of `demo-symfony-k3s`; wait ≤ 15 min |
