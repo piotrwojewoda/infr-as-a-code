@@ -9,7 +9,9 @@ configs:
     # TLS is terminated at Traefik; argocd-server speaks plain HTTP inside.
     server.insecure: true
     # ArgoCD lives UNDER the main domain (real cert has no wildcard SANs).
+    # basehref = links/assets; rootpath = actually moves the routes (v3.x).
     server.basehref: /argocd
+    server.rootpath: /argocd
 
 server:
   ingress:
