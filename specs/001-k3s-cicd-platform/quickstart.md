@@ -71,6 +71,16 @@ kubectl -n argocd  get secret argocd-initial-admin-secret -o jsonpath='{.data.pa
    re-add the `ghcr-config` volume (see git history for the GHCR variant).
 4. Delete the registry: `kubectl delete -f clusters/malina/infrastructure/registry.yaml`.
 
+## Troubleshooting (learned during the first production run)
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| After a HARD Pi reboot, `jenkins-0` stays `0/2 Unknown` for many minutes | k3s/containerd does not reattach the StatefulSet pod containers | `kubectl -n jenkins delete pod jenkins-0 --force --grace-period=0` — the StatefulSet recreates it in ~1 min |
+| An ArgoCD app stays `Unknown` with a stale `connection refused` to the repo-server | comparison error cached while repo-server was down | `kubectl -n argocd annotate application <app> argocd.argoproj.io/refresh=hard --overwrite` |
+| repo-server OOMKilled | limit too low for parallel chart renders on a small node | already fixed in `argocd-values.yaml` (1Gi) — keep it |
+| Build fails with `dubious ownership in repository` | mixed uids in the Jenkins agent pod | already handled in the Jenkinsfile (`safe.directory`) |
+| `docker push` to ghcr.io: `DENIED: permission_denied` | PAT lacks Packages:write | the platform uses the in-cluster registry (research.md D2); see "Switch the registry to GHCR" above |
+
 ## Rebuild everything from scratch
 
 ```bash
