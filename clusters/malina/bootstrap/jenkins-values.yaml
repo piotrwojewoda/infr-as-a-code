@@ -61,9 +61,6 @@ controller:
     defaultConfig: true
     configScripts:
       platform-config: |
-        unclassified:
-          location:
-            url: https://kreciowo.pl/jenkins/
         credentials:
           system:
             domainCredentials:
