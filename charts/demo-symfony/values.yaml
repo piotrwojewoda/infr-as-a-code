@@ -19,8 +19,12 @@ service:
 ingress:
   enabled: true
   className: traefik
-  host: demo.kreciowo.pl
-  tlsSecret: kreciowo-dummy-tls
+  hosts:
+    - host: demo.kreciowo.pl
+  # tls: map of secretName -> list of hosts it covers
+  tls:
+    kreciowo-dummy-tls:
+      - demo.kreciowo.pl
 
 # References to the bootstrap-created Secret holding APP_SECRET + DATABASE_URL.
 envSecretName: demo-app

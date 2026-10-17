@@ -12,8 +12,18 @@ image:
 imagePullSecrets: []   # in-cluster registry has no auth (LAN only)
 
 ingress:
-  host: demo.kreciowo.pl
-  tlsSecret: kreciowo-dummy-tls
+  # kreciowo.pl + www use the REAL certificate (home.pl DV, secret loaded by
+  # the operator — never in git). demo.* keeps the dummy cert for now.
+  hosts:
+    - host: kreciowo.pl
+    - host: www.kreciowo.pl
+    - host: demo.kreciowo.pl
+  tls:
+    kreciowo-tls:
+      - kreciowo.pl
+      - www.kreciowo.pl
+    kreciowo-dummy-tls:
+      - demo.kreciowo.pl
 
 resources:
   requests: { cpu: 50m,  memory: 128Mi }
