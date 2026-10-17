@@ -19,6 +19,9 @@ server:
     ingressClassName: traefik
     hostname: kreciowo.pl
     path: /argocd
+    annotations:
+      # spec 003: the UI is LAN-only.
+      traefik.ingress.kubernetes.io/router.middlewares: kube-system-lan-only@kubernetescrd
     # Uses TLS secret `argocd-server-tls` — the operator loads the REAL
     # certificate into it (the name is fixed by the chart).
     tls: true

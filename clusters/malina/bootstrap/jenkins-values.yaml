@@ -44,6 +44,11 @@ controller:
     ingressClassName: traefik
     hostName: kreciowo.pl
     path: /jenkins
+    annotations:
+      # spec 003: the UI is LAN-only. The public route for
+      # /jenkins/github-webhook/ lives in infrastructure/traefik-security.yaml
+      # (longest path prefix wins over this rule).
+      traefik.ingress.kubernetes.io/router.middlewares: kube-system-lan-only@kubernetescrd
     tls:
       - secretName: kreciowo-tls   # REAL cert (loaded by operator, not in git)
         hosts:

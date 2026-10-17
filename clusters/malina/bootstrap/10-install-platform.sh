@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Bootstrap step 1: platform layer (cert-manager, ArgoCD, Jenkins) + secrets.
+# NOTE: on a fresh host run `05-hardening.sh` BEFORE this script (spec 003).
 # Secrets are created from operator input and are NEVER written to git
 # (Constitution III).
 #
@@ -116,6 +117,9 @@ helm upgrade --install jenkins jenkinsci/jenkins \
 
 echo "==> Traefik: redirect HTTP -> HTTPS"
 kubectl apply -f ../infrastructure/traefik-config.yaml
+
+echo "==> Traefik security: LAN-only admin UIs + public webhook route"
+kubectl apply -f ../infrastructure/traefik-security.yaml
 
 cat <<EOF
 

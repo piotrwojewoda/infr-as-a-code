@@ -9,7 +9,12 @@ cd infr-as-a-code/clusters/malina/bootstrap
 # 1. k3s + Helm 3
 bash 00-install-k3s.sh
 
-# 2. Platform: cert-manager + dummy certs, ArgoCD, Jenkins
+# 2. Host hardening: SSH keys-only, ufw, fail2ban, unattended upgrades
+#    (spec 003 — run this BEFORE the platform; your SSH key must be in
+#    ssh-keys/ first or the script aborts on purpose)
+bash 05-hardening.sh
+
+# 3. Platform: cert-manager + dummy certs, ArgoCD, Jenkins
 export GITHUB_USER=piotrwojewoda
 export GITHUB_TOKEN='<PAT with repo + packages scope>'   # not stored anywhere
 export GITHUB_WEBHOOK_SECRET="$(openssl rand -hex 32)"   # same value goes into the GitHub webhook
@@ -17,7 +22,7 @@ export DB_PASSWORD="$(openssl rand -hex 16)"
 export JENKINS_ADMIN_PASSWORD="$(openssl rand -hex 12)"
 bash 10-install-platform.sh
 
-# 3. GitOps: point ArgoCD at this repository
+# 4. GitOps: point ArgoCD at this repository
 kubectl apply -f ../apps/root-app.yaml
 ```
 
@@ -33,3 +38,21 @@ What is created outside git (Constitution III):
 
 Re-running `10-install-platform.sh` is safe (`helm upgrade --install`,
 secrets applied idempotently).
+
+## Hardening notes (spec 003)
+
+- `05-hardening.sh` installs the public keys from `ssh-keys/*.pub` for the
+  operator account, disables password SSH login, enables fail2ban (sshd),
+  configures ufw (inbound: 22/80/443 + cluster-internal only) and turns on
+  automatic Debian security updates (no auto-reboot).
+- Key rotation: replace the file in `ssh-keys/`, commit, re-run
+  `05-hardening.sh`. Removing a key deletes nothing — remove the line from
+  `~/.ssh/authorized_keys` by hand if a key must be revoked.
+- The admin UIs (`/jenkins`, `/argocd`) are LAN-only after the platform is
+  installed; the demo page and `/jenkins/github-webhook/` stay public.
+  Details: `specs/003-security-hardening/contracts/exposure.md`.
+- Security updates install automatically, but the host never reboots itself:
+  check `cat /var/run/reboot-required` monthly and reboot when asked.
+- Lockout recovery: if all SSH keys are lost, log in physically on the Pi
+  and delete `/etc/ssh/sshd_config.d/99-malina.conf`, then `systemctl
+  restart ssh.socket` (or `ssh.service`).

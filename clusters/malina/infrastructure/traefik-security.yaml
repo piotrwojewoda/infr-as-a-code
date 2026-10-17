@@ -1,0 +1,42 @@
+# Security hardening at the proxy layer (spec 003-security-hardening).
+# Contract: specs/003-security-hardening/contracts/exposure.md
+#
+# One middleware restricts admin UIs to LAN addresses. One extra Ingress keeps
+# the GitHub webhook public: Traefik routes by longest path prefix, so
+# /jenkins/github-webhook/ wins over the LAN-only /jenkins rule.
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: lan-only
+  namespace: kube-system
+spec:
+  ipAllowList:
+    sourceRange:
+      - 192.168.0.0/16   # home LAN
+      - 10.0.0.0/8       # RFC1918
+      - 172.16.0.0/12    # RFC1918
+---
+# Public route: GitHub -> Jenkins webhook (HMAC-protected by Jenkins itself).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jenkins-github-webhook
+  namespace: jenkins
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: kreciowo.pl
+      http:
+        paths:
+          - path: /jenkins/github-webhook/
+            pathType: Prefix
+            backend:
+              service:
+                name: jenkins
+                port:
+                  number: 8080
+  tls:
+    - secretName: kreciowo-tls   # REAL cert (loaded by operator, not in git)
+      hosts:
+        - kreciowo.pl
