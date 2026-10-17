@@ -27,11 +27,15 @@ controller:
     limits:   { cpu: 500m, memory: 512Mi }
 
 repoServer:
-  # 512Mi limit: `helm pull` + render of bigger charts (e.g. Bitnami
-  # postgresql) was OOMKilled at 256Mi on the Pi.
+  # Small single node: serialize manifest generation and give it headroom.
+  # 256Mi and even 512Mi were OOMKilled on the Pi when several apps
+  # reconciled at once (e.g. right after a node reboot).
   resources:
     requests: { cpu: 25m, memory: 128Mi }
-    limits:   { cpu: 300m, memory: 512Mi }
+    limits:   { cpu: 300m, memory: 1Gi }
+  env:
+    - name: ARGOCD_REPO_SERVER_PARALLELISM_LIMIT
+      value: "1"
 
 redis:
   resources:
