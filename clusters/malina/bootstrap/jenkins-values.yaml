@@ -14,13 +14,15 @@ controller:
 
   installPlugins:
     - kubernetes            # pod-based build agents
-    - workflow-aggregator   # pipelines
+    - workflow-aggregator   # pipelines (bundles pipeline-groovy-lib for shared libraries)
     - git
     - github                # GitHub webhook trigger (no polling)
     - configuration-as-code
     - job-dsl               # seed jobs from code
     - credentials-binding
     - plain-credentials     # Secret text credential (webhook shared secret)
+    - junit                 # publish test reports (test gate, spec 002)
+    - pipeline-stage-view   # live stage diagram on the job page (spec 002)
 
   # Builds run on Kubernetes agents only, never on the controller.
   numExecutors: 0
@@ -84,7 +86,7 @@ controller:
         jobs:
           - script: |
               pipelineJob('demo-symfony-k3s') {
-                description('Merge to main -> Kaniko build -> push to ghcr.io -> bump GitOps repo tag. Trigger: GitHub webhook -> https://kreciowo.pl/jenkins/github-webhook/ (no polling).')
+                description('Merge to main -> ciPipeline (global shared library "malina-ci"): mandatory Test stage (ci/test.sh) -> Kaniko build -> push to in-cluster registry -> bump GitOps repo tag. Trigger: GitHub webhook -> https://kreciowo.pl/jenkins/github-webhook/ (no polling).')
                 definition {
                   cpsScm {
                     scm {
@@ -104,6 +106,25 @@ controller:
             hookSecretConfigs:
               - credentialsId: "github-webhook-secret"
                 signatureAlgorithm: "SHA256"
+          # The enforced delivery pipeline (spec 002): one global library,
+          # loaded implicitly, no per-job version override -> applications
+          # cannot skip or pin around the mandatory test gate.
+          globalLibraries:
+            libraries:
+              - name: "malina-ci"
+                defaultVersion: "main"
+                implicit: true
+                allowVersionOverride: false
+                includeInChangesets: false
+                retriever:
+                  modernSCM:
+                    libraryPath: "jenkins/shared-library/"
+                    scm:
+                      git:
+                        id: "malina-ci-lib"
+                        remote: "https://github.com/piotrwojewoda/infr-as-a-code.git"
+                        traits:
+                          - "gitBranchDiscovery"
 
 agent:
   enabled: true
