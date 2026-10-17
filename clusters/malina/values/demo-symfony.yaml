@@ -4,9 +4,12 @@
 # (contract: specs/001-k3s-cicd-platform/contracts/pipeline.md).
 # Format: short git SHA of the app repository, or "latest" before first build.
 image:
-  repository: ghcr.io/piotrwojewoda/demo-symfony-k3s
+  # In-cluster registry (NodePort 30500) — see research.md D2 (GHCR fallback).
+  repository: 192.168.68.52:30500/demo-symfony-k3s
   tag: "latest"
   pullPolicy: IfNotPresent
+
+imagePullSecrets: []   # in-cluster registry has no auth (LAN only)
 
 ingress:
   host: demo.kreciowo.pl

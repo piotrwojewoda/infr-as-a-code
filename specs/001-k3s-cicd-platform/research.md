@@ -15,16 +15,27 @@ fact was tested against the real environment on 2026-10-17.
   maintain. Traefik reads standard `Ingress` objects, so applications stay
   portable.
 
-## D2 — Container registry: GitHub Container Registry (ghcr.io)
+## D2 — Container registry: in-cluster `registry:2` (fallback), GHCR later
 
-- **Decision**: Push images to `ghcr.io/piotrwojewoda/<app>`. Pull secrets of
-  type `kubernetes.io/dockerconfigjson` are created by the bootstrap script in
-  the namespaces that need them (the ghcr package stays private).
-- **Alternatives**: in-cluster registry (`registry:2` + insecure registry
-  config in containerd) — more moving parts, more storage on the SD card;
-  Docker Hub — stricter rate limits on ARM pulls.
-- **Why**: Verified: `docker login ghcr.io` with the provided PAT succeeded on
-  the Pi. No extra component to run. Images are versioned next to the source.
+- **Decision (updated 2026-10-17)**: Run `registry:2` in the cluster
+  (namespace `registry`, PVC, **NodePort 30500** on the node). Kaniko pushes
+  over plain HTTP (`--insecure`); containerd pulls through a `mirrors` entry
+  in `/etc/rancher/k3s/registries.yaml` (written by the bootstrap script).
+  Image reference: `192.168.68.52:30500/<app>:<tag>`. No authentication —
+  LAN-only homelab exposure.
+- **Original decision**: GHCR (`ghcr.io/piotrwojewoda/<app>`). Verified
+  `docker login ghcr.io` succeeded with the operator PAT — but the first real
+  push failed: the fine-grained PAT lacks the Packages:write scope and PATs
+  cannot be extended via API.
+- **Why the fallback**: zero external dependencies, fastest pulls on the LAN,
+  no token-scope blockers. The operator chose this option explicitly.
+- **Swap path**: when a token with `packages: write` exists, change
+  `image.repository` in `clusters/malina/values/demo-symfony.yaml` and the
+  `env.IMAGE` constant in the app repo's `Jenkinsfile`, re-create the
+  `ghcr-pull`/`ghcr-push` secrets, and remove the registry Deployment
+  (documented in quickstart.md).
+- **Alternatives rejected**: Docker Hub (rate limits on ARM pulls); waiting
+  for a new token (blocks the whole platform).
 
 ## D3 — Image builds inside the cluster: Kaniko
 

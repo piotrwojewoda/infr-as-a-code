@@ -9,7 +9,7 @@ entities below are Kubernetes/Helm objects and the files that describe them.
 
 | Field | Type | Source of truth | Notes |
 |-------|------|-----------------|-------|
-| `image.repository` | string | `clusters/malina/values/demo-symfony.yaml` | fixed: `ghcr.io/piotrwojewoda/demo-symfony-k3s` |
+| `image.repository` | string | `clusters/malina/values/demo-symfony.yaml` | fixed: `192.168.68.52:30500/demo-symfony-k3s` (in-cluster registry, see research.md D2) |
 | `image.tag` | string | same file, **written by Jenkins** | short git SHA of the app repo, e.g. `a1b2c3d`; `latest` is also pushed but never used by deployments |
 | `image.pullPolicy` | string | chart default | `IfNotPresent` |
 
@@ -29,10 +29,10 @@ State flow: `merge on main` → Jenkins builds image `:sha` → Jenkins commits 
 
 | Name | Namespace | Keys | Created by | Used by |
 |------|-----------|------|------------|---------|
-| `ghcr-pull` | `demo` | `.dockerconfigjson` | bootstrap script | pod image pulls from ghcr |
+| `ghcr-pull` | `demo` | `.dockerconfigjson` | bootstrap script | (dormant — for the future GHCR swap; in-cluster registry needs no auth) |
 | `demo-db` | `demo` | `password`, `postgres-password` | bootstrap script | PostgreSQL (Bitnami `auth.existingSecret`) |
 | `demo-app` | `demo` | `DATABASE_URL`, `APP_SECRET` | bootstrap script | demo app Deployment env |
-| `jenkins-github` | `jenkins` | `username`, `token` | bootstrap script | JCasC credential → pipeline pushes to ghcr + GitOps repo |
+| `jenkins-github` | `jenkins` | `username`, `token` | bootstrap script | JCasC credential → pipeline pushes GitOps tag bump |
 | `argocd-initial-admin` | `argocd` | `password` | ArgoCD install | first login (runbook: change it) |
 
 ## Entity: Hostname routing (see contracts/ingress.md)

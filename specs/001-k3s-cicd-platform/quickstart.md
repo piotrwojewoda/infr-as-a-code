@@ -59,6 +59,18 @@ kubectl -n argocd  get secret argocd-initial-admin-secret -o jsonpath='{.data.pa
 4. Delete the old secrets: `kubectl -n demo delete secret kreciowo-dummy-tls`
    (same in `jenkins` and `argocd`) — cert-manager re-issues real certificates.
 
+## Switch the registry to GHCR (once a token with `packages: write` exists)
+
+1. Update the secrets: re-run the secret part of `10-install-platform.sh` with
+   the new `GITHUB_TOKEN` (it re-creates `ghcr-pull` / `ghcr-push` / `jenkins-github`).
+2. In `clusters/malina/values/demo-symfony.yaml`: set
+   `image.repository: ghcr.io/piotrwojewoda/demo-symfony-k3s` and
+   `imagePullSecrets: [{ name: ghcr-pull }]`. Commit + push.
+3. In the app repo `Jenkinsfile`: set `env.IMAGE` to
+   `ghcr.io/piotrwojewoda/demo-symfony-k3s`, drop the `--insecure` flag, and
+   re-add the `ghcr-config` volume (see git history for the GHCR variant).
+4. Delete the registry: `kubectl delete -f clusters/malina/infrastructure/registry.yaml`.
+
 ## Rebuild everything from scratch
 
 ```bash

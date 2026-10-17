@@ -10,9 +10,10 @@
 ## Stages (must run in this order)
 
 1. **Checkout** — full clone of the app repo at the merged commit.
-2. **Build & Push** — Kaniko builds `Dockerfile` from the repo root and pushes:
-   - `ghcr.io/piotrwojewoda/demo-symfony-k3s:<short-sha>` (immutable release)
-   - `ghcr.io/piotrwojewoda/demo-symfony-k3s:latest` (convenience tag)
+2. **Build & Push** — Kaniko builds `Dockerfile` from the repo root and pushes
+   to the in-cluster registry (NodePort 30500, plain HTTP → `--insecure`):
+   - `192.168.68.52:30500/demo-symfony-k3s:<short-sha>` (immutable release)
+   - `192.168.68.52:30500/demo-symfony-k3s:latest` (convenience tag)
 3. **Update GitOps repo** — clone `piotrwojewoda/infr-as-a-code`, set
    `image.tag: <short-sha>` in `clusters/malina/values/demo-symfony.yaml`,
    commit `chore(release): demo-symfony-k3s <short-sha>`, push to `main`.
@@ -22,8 +23,8 @@
 
 | Variable | Purpose |
 |----------|---------|
-| `GITHUB_USER` | git push + ghcr login user |
-| `GITHUB_TOKEN` | PAT: `repo` + `packages` (read/write) |
+| `GITHUB_USER` | git push user |
+| `GITHUB_TOKEN` | PAT with `repo` scope — used ONLY to push the GitOps tag bump. Image push needs no auth (in-cluster registry). |
 
 ## Guarantees
 

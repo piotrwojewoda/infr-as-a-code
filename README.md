@@ -3,7 +3,8 @@
 GitOps repository for a single-node **k3s** cluster on a Raspberry Pi 5
 (`malina`, 192.168.68.52) that works as a complete CI/CD platform:
 
-- **CI**: Jenkins (Kubernetes agents + Kaniko builds) → pushes images to ghcr.io
+- **CI**: Jenkins (Kubernetes agents + Kaniko builds) → pushes images to the
+  in-cluster registry (`192.168.68.52:30500`, GHCR fallback — research.md D2)
 - **CD**: ArgoCD (app-of-apps) applies everything from this repository
 - **Ingress**: Traefik (bundled with k3s) on ports 80/443
 - **TLS**: cert-manager — dummy self-signed certificate now, real one later

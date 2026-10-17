@@ -73,6 +73,22 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --set crds.enabled=true \
   --wait --timeout 5m
 
+echo "==> In-cluster registry + containerd insecure-mirror config"
+# containerd must pull from the HTTP registry at <node-ip>:30500
+NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+if ! grep -q "$NODE_IP:30500" /etc/rancher/k3s/registries.yaml 2>/dev/null; then
+  echo "    writing /etc/rancher/k3s/registries.yaml (needs sudo) and restarting k3s"
+  sudo tee /etc/rancher/k3s/registries.yaml >/dev/null <<YAML
+mirrors:
+  "${NODE_IP}:30500":
+    endpoint:
+      - "http://${NODE_IP}:30500"
+YAML
+  sudo systemctl restart k3s
+  until kubectl get nodes 2>/dev/null | grep -q ' Ready'; do sleep 5; done
+fi
+kubectl apply -f ../infrastructure/registry.yaml
+
 echo "==> ClusterIssuers + dummy TLS certificates"
 kubectl apply -f ../infrastructure/cluster-issuers.yaml
 kubectl apply -f ../infrastructure/certificates.yaml
