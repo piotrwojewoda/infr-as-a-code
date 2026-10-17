@@ -8,14 +8,17 @@ configs:
   params:
     # TLS is terminated at Traefik; argocd-server speaks plain HTTP inside.
     server.insecure: true
+    # ArgoCD lives UNDER the main domain (real cert has no wildcard SANs).
+    server.basehref: /argocd
 
 server:
   ingress:
     enabled: true
     ingressClassName: traefik
-    hostname: argocd.kreciowo.pl
-    # Uses TLS secret `argocd-server-tls` (issued by cert-manager, see
-    # clusters/malina/infrastructure/certificates.yaml).
+    hostname: kreciowo.pl
+    path: /argocd
+    # Uses TLS secret `argocd-server-tls` — the operator loads the REAL
+    # certificate into it (the name is fixed by the chart).
     tls: true
   resources:
     requests: { cpu: 50m, memory: 128Mi }

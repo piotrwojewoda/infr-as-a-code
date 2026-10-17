@@ -8,6 +8,10 @@ controller:
     repository: jenkins/jenkins
     tag: lts-jdk21   # multi-arch (arm64 verified)
 
+  # Jenkins lives UNDER the main domain (the real certificate covers only
+  # kreciowo.pl + www.kreciowo.pl — no wildcard).
+  jenkinsUriPrefix: /jenkins
+
   installPlugins:
     - kubernetes            # pod-based build agents
     - workflow-aggregator   # pipelines
@@ -34,11 +38,12 @@ controller:
     enabled: true
     apiVersion: networking.k8s.io/v1
     ingressClassName: traefik
-    hostName: jenkins.kreciowo.pl
+    hostName: kreciowo.pl
+    path: /jenkins
     tls:
-      - secretName: kreciowo-dummy-tls
+      - secretName: kreciowo-tls   # REAL cert (loaded by operator, not in git)
         hosts:
-          - jenkins.kreciowo.pl
+          - kreciowo.pl
 
   # Injected from Kubernetes Secret `jenkins-github` (not from git).
   containerEnv:
@@ -56,6 +61,9 @@ controller:
     defaultConfig: true
     configScripts:
       platform-config: |
+        unclassified:
+          location:
+            url: https://kreciowo.pl/jenkins/
         credentials:
           system:
             domainCredentials:
