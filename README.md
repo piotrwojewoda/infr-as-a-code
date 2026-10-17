@@ -12,8 +12,8 @@ GitOps repository for a single-node **k3s** cluster on a Raspberry Pi 5
   (real cert; tools: `kreciowo.pl/jenkins/`, `kreciowo.pl/argocd/`;
   source: `piotrwojewoda/demo-symfony-k3s`)
 
-A merge to `main` of an application repository triggers the full chain:
-build → push image → bump `image.tag` here → ArgoCD rollout.
+A merge to `main` of an application repository triggers the full chain via a
+GitHub webhook → build → push image → bump `image.tag` here → ArgoCD rollout.
 
 ## Layout
 

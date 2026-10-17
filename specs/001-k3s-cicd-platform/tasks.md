@@ -58,7 +58,7 @@ certificate. US3 (the pipeline) comes last because it needs US1+US2+US4.
 **Independent Test**: login to `https://jenkins.kreciowo.pl` and `https://argocd.kreciowo.pl`; wipe and rebuild → same configuration.
 
 - [x] T010 [P] [US2] Write `clusters/malina/bootstrap/argocd-values.yaml` (server insecure behind proxy, ingress `argocd.kreciowo.pl` + TLS secret, resource limits for 8 GB Pi)
-- [x] T011 [P] [US2] Write `clusters/malina/bootstrap/jenkins-values.yaml` (JCasC: plugins kubernetes/workflow-job/git/configuration-as-code/job-dsl/credentials-binding; Job DSL seed for `demo-symfony-k3s` pipeline with SCM poll `* * * * *`; credential from env `GITHUB_USER`/`GITHUB_TOKEN`; ingress `jenkins.kreciowo.pl` + TLS; PVC 8Gi; resources fitted to the Pi)
+- [x] T011 [P] [US2] Write `clusters/malina/bootstrap/jenkins-values.yaml` (JCasC: plugins kubernetes/workflow-job/git/github/configuration-as-code/job-dsl/credentials-binding; Job DSL seed for `demo-symfony-k3s` pipeline with GitHub webhook trigger `githubPush()`; credential from env `GITHUB_USER`/`GITHUB_TOKEN`; ingress `kreciowo.pl/jenkins` + TLS; PVC 8Gi; resources fitted to the Pi)
 - [x] T012 [US2] Write `clusters/malina/bootstrap/10-install-platform.sh`: namespaces, secrets from operator input (`jenkins-github`, `ghcr-pull`, `demo-db`, `demo-app`), helm installs for cert-manager/ArgoCD/Jenkins, apply infrastructure manifests
 - [x] T013 [US2] Run the platform install on the Pi; verify all pods `Running` in `cert-manager`, `argocd`, `jenkins`
 - [x] T014 [US2] Write `clusters/malina/apps/root-app.yaml` (app-of-apps) and apply it; verify ArgoCD shows child apps

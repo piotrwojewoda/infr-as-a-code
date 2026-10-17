@@ -5,7 +5,8 @@
 ## Trigger
 
 - Input event: a new commit on branch `main` of `piotrwojewoda/demo-symfony-k3s`.
-- Detection: Jenkins SCM polling, cron `* * * * *` (until webhooks are possible).
+- Detection: GitHub webhook to `https://kreciowo.pl/jenkins/github-webhook/`
+  (`githubPush()` trigger on the job).
 
 ## Stages (must run in this order)
 

@@ -32,7 +32,7 @@ State flow: `merge on main` → Jenkins builds image `:sha` → Jenkins commits 
 | `ghcr-pull` | `demo` | `.dockerconfigjson` | bootstrap script | (dormant — for the future GHCR swap; in-cluster registry needs no auth) |
 | `demo-db` | `demo` | `password`, `postgres-password` | bootstrap script | PostgreSQL (Bitnami `auth.existingSecret`) |
 | `demo-app` | `demo` | `DATABASE_URL`, `APP_SECRET` | bootstrap script | demo app Deployment env |
-| `jenkins-github` | `jenkins` | `username`, `token` | bootstrap script | JCasC credential → pipeline pushes GitOps tag bump |
+| `jenkins-github` | `jenkins` | `username`, `token`, `webhook-secret` | bootstrap script | JCasC credential → pipeline pushes GitOps tag bump; `webhook-secret` validates the GitHub push hook (X-Hub-Signature-256) |
 | `argocd-initial-admin` | `argocd` | `password` | ArgoCD install | first login (runbook: change it) |
 
 ## Entity: Hostname routing (see contracts/ingress.md)
@@ -75,5 +75,5 @@ GitOps repo (infr-as-a-code)
  ├── charts/demo-symfony ◀── used by ── Application demo-symfony
  └── values/demo-symfony.yaml ◀── bumped by ── Jenkins pipeline
 App repo (demo-symfony-k3s)
- └── Jenkinsfile ──▶ Jenkins (polling) ──▶ Kaniko ──▶ ghcr.io image
+ └── Jenkinsfile ──▶ Jenkins (webhook) ──▶ Kaniko ──▶ ghcr.io image
 ```

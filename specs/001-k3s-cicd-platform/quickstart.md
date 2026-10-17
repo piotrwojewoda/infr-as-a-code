@@ -37,9 +37,25 @@ On every computer that should reach the platform, add to `/etc/hosts`:
 | See the demo app | `https://kreciowo.pl` / `https://www.kreciowo.pl` (**real certificate**) — alias `https://demo.kreciowo.pl` (dummy cert) |
 | Jenkins UI | `https://kreciowo.pl/jenkins/` (real cert; admin password: see below) |
 | ArgoCD UI | `https://kreciowo.pl/argocd/` (real cert) |
-| Deploy a new app version | merge a pull request to `main` of `demo-symfony-k3s`; wait ≤ 15 min |
+| Deploy a new app version | merge a pull request to `main` of `demo-symfony-k3s`; Jenkins starts on the GitHub push webhook (seconds, no polling) |
 | Watch a deployment | `kubectl -n demo get pods -w` or the ArgoCD UI |
 | Check pipeline | Jenkins UI → job `demo-symfony-k3s` |
+
+## Enable the GitHub webhook (CI trigger)
+
+The job uses the `githubPush()` trigger, so Jenkins builds when GitHub sends a
+push event. No polling is configured.
+
+1. In the app repository `piotrwojewoda/demo-symfony-k3s`:
+   **Settings → Webhooks → Add webhook**
+   - Payload URL: `https://kreciowo.pl/jenkins/github-webhook/`
+   - Content type: `application/json`
+   - Event: *Just the push event*
+2. Merge (or push) to `main` and confirm the `demo-symfony-k3s` build starts in
+   a few seconds (Jenkins UI → job → *Build History*).
+3. In GitHub, open the webhook → *Recent Deliveries* to debug: a `200` means
+   Jenkins accepted the event; a `404` means the URL or the job SCM URL does not
+   match.
 
 ## Get passwords (they are not in git)
 

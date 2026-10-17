@@ -12,6 +12,7 @@ bash 00-install-k3s.sh
 # 2. Platform: cert-manager + dummy certs, ArgoCD, Jenkins
 export GITHUB_USER=piotrwojewoda
 export GITHUB_TOKEN='<PAT with repo + packages scope>'   # not stored anywhere
+export GITHUB_WEBHOOK_SECRET="$(openssl rand -hex 32)"   # same value goes into the GitHub webhook
 export DB_PASSWORD="$(openssl rand -hex 16)"
 export JENKINS_ADMIN_PASSWORD="$(openssl rand -hex 12)"
 bash 10-install-platform.sh

@@ -16,9 +16,11 @@ controller:
     - kubernetes            # pod-based build agents
     - workflow-aggregator   # pipelines
     - git
+    - github                # GitHub webhook trigger (no polling)
     - configuration-as-code
     - job-dsl               # seed jobs from code
     - credentials-binding
+    - plain-credentials     # Secret text credential (webhook shared secret)
 
   # Builds run on Kubernetes agents only, never on the controller.
   numExecutors: 0
@@ -53,6 +55,9 @@ controller:
     - name: GITHUB_TOKEN
       valueFrom:
         secretKeyRef: { name: jenkins-github, key: token }
+    - name: GITHUB_WEBHOOK_SECRET
+      valueFrom:
+        secretKeyRef: { name: jenkins-github, key: webhook-secret }
 
   systemMessage: "Jenkins on k3s @ Raspberry Pi (malina) - configured as code"
 
@@ -71,10 +76,15 @@ controller:
                       username: "${GITHUB_USER}"
                       password: "${GITHUB_TOKEN}"
                       description: "GitHub PAT: ghcr.io push + GitOps repo push"
+                  - string:
+                      scope: GLOBAL
+                      id: "github-webhook-secret"
+                      secret: "${GITHUB_WEBHOOK_SECRET}"
+                      description: "GitHub webhook shared secret (X-Hub-Signature-256)"
         jobs:
           - script: |
               pipelineJob('demo-symfony-k3s') {
-                description('Merge to main -> Kaniko build -> push to ghcr.io -> bump GitOps repo tag. Trigger: SCM polling every minute (webhook after router port-forward - see runbook).')
+                description('Merge to main -> Kaniko build -> push to ghcr.io -> bump GitOps repo tag. Trigger: GitHub webhook -> https://kreciowo.pl/jenkins/github-webhook/ (no polling).')
                 definition {
                   cpsScm {
                     scm {
@@ -87,8 +97,13 @@ controller:
                     lightweight(true)
                   }
                 }
-                triggers { scm('* * * * *') }
+                triggers { githubPush() }
               }
+        unclassified:
+          githubpluginconfig:
+            hookSecretConfigs:
+              - credentialsId: "github-webhook-secret"
+                signatureAlgorithm: "SHA256"
 
 agent:
   enabled: true

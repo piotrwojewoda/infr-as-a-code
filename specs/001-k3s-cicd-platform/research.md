@@ -48,16 +48,16 @@ fact was tested against the real environment on 2026-10-17.
 - **Why**: Daemonless, unprivileged build is the accepted best practice for
   Kubernetes CI. The `-debug` variant provides a shell for pipeline steps.
 
-## D4 — Merge trigger: SCM polling now, webhook later
+## D4 — Merge trigger: GitHub webhook
 
-- **Decision**: Jenkins polls the application repository every minute
-  (`* * * * *` on the job). The runbook documents how to switch to a GitHub
-  webhook once the router forwards ports to the Pi.
-- **Alternatives**: expose Jenkins through a tunnel (extra dependency, new
-  attack surface); do nothing until the router is configured (no automatic
-  trigger at all).
-- **Why**: GitHub cannot reach the Pi today (no port forwarding, verified with
-  the user). Polling meets FR-006 with zero external dependencies.
+- **Decision**: GitHub pushes a webhook to
+  `https://kreciowo.pl/jenkins/github-webhook/` on every merge to `main`; the
+  Jenkins job uses the `githubPush()` trigger (no polling).
+- **Alternatives**: SCM polling every minute (works without inbound access, but
+  adds up to 1 min latency and constant load); expose Jenkins through a tunnel
+  (extra dependency, new attack surface).
+- **Why**: ports 80/443 are now forwarded to the Pi, so GitHub can reach the
+  cluster. The webhook builds exactly on push, with no polling overhead.
 
 ## D5 — TLS: cert-manager with a self-signed ClusterIssuer (dummy), real one prepared
 

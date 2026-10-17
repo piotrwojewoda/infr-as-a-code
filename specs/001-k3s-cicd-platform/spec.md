@@ -123,8 +123,8 @@ issuer. The runbook documents the swap to the real certificate in one command.
   deployed version MUST stay untouched.
 - Two merges happen quickly after each other: deployments MUST apply in order;
   the last merged version wins.
-- GitHub webhooks cannot reach the Pi (no port forwarding yet): the pipeline
-  MUST still notice merges, at most within one minute, by polling.
+- The GitHub webhook delivery is lost or delayed: the pipeline MUST stay
+  re-runnable manually from the Jenkins UI, so a missed merge can still be built.
 
 ## Requirements *(mandatory)*
 
@@ -143,8 +143,7 @@ issuer. The runbook documents the swap to the real certificate in one command.
   and applies changes automatically.
 - **FR-006**: A merge to `main` in the application repository MUST trigger a
   pipeline that builds a container image and pushes it to a container registry.
-  Because GitHub cannot reach the Pi from the internet yet, merge detection MAY
-  use polling with an interval of one minute or less.
+  Merge detection MUST use a GitHub webhook (no polling).
 - **FR-007**: After a successful build, the pipeline MUST update the desired
   application version in the GitOps repository so that ArgoCD deploys it.
 - **FR-008**: The demo application MUST be a Symfony 8 application running on
@@ -195,8 +194,8 @@ issuer. The runbook documents the swap to the real certificate in one command.
 
 - The Raspberry Pi (Debian 12, ARM64, 8 GB RAM, 57 GB SD card) is dedicated to
   this platform.
-- The local network is trusted; the router does not forward ports 80/443 to the
-  Pi yet, so GitHub webhooks cannot reach the cluster and polling is used.
+- The local network is trusted; the router forwards ports 80/443 to the Pi, so
+  GitHub webhooks reach Jenkins at `https://kreciowo.pl/jenkins/github-webhook/`.
 - The domain `kreciowo.pl` is owned by the operator; DNS records for the
   subdomains will point to the Pi later. For now, name resolution is done with
   local `/etc/hosts` entries.

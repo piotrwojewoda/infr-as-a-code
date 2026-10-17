@@ -12,7 +12,7 @@ installed by a bootstrap script. The bootstrap also installs cert-manager,
 ArgoCD and Jenkins from Helm charts, with secrets created outside git. ArgoCD
 then manages the demo application stack (Symfony 8 + PHP 8.5 + PostgreSQL) from
 the GitOps repository `infr-as-a-code`. A merge to `main` in
-`demo-symfony-k3s` triggers (by polling, until webhooks are possible) a Jenkins
+`demo-symfony-k3s` triggers (by GitHub webhook) a Jenkins
 pipeline that builds an ARM64 image with Kaniko, pushes it to ghcr.io, bumps the
 image tag in the GitOps repository, and ArgoCD rolls it out behind
 `https://demo.kreciowo.pl` with a dummy self-signed TLS certificate.
@@ -44,8 +44,8 @@ node `malina` at 192.168.68.52
 **Performance Goals**: homelab scale; pipeline end-to-end under 15 minutes
 
 **Constraints**: total workload must fit 8 GB RAM and 4 cores; all images must
-support linux/arm64; no inbound internet access to the Pi (GitHub webhooks
-impossible for now → polling); public git repositories → no secrets in git
+support linux/arm64; inbound HTTPS to the Pi for GitHub webhooks; public git
+repositories → no secrets in git
 
 **Scale/Scope**: 1 node; namespaces: `kube-system`, `cert-manager`, `argocd`,
 `jenkins`, `demo`; 3 platform hostnames; 1 demo application with 1 database

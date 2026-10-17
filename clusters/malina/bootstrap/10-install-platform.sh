@@ -6,6 +6,7 @@
 # Required environment variables:
 #   GITHUB_USER            GitHub username
 #   GITHUB_TOKEN           GitHub PAT with repo + packages (read/write) scope
+#   GITHUB_WEBHOOK_SECRET  shared secret for the GitHub -> Jenkins webhook
 #   DB_PASSWORD            password for the demo PostgreSQL database
 #   JENKINS_ADMIN_PASSWORD initial Jenkins admin password
 # Optional:
@@ -15,6 +16,7 @@ cd "$(dirname "$0")"
 
 : "${GITHUB_USER:?Set GITHUB_USER}"
 : "${GITHUB_TOKEN:?Set GITHUB_TOKEN}"
+: "${GITHUB_WEBHOOK_SECRET:?Set GITHUB_WEBHOOK_SECRET}"
 : "${DB_PASSWORD:?Set DB_PASSWORD}"
 : "${JENKINS_ADMIN_PASSWORD:?Set JENKINS_ADMIN_PASSWORD}"
 DOMAIN="${DOMAIN:-kreciowo.pl}"
@@ -32,6 +34,7 @@ echo "==> Secrets (created at runtime, never in git)"
 kubectl -n jenkins create secret generic jenkins-github \
   --from-literal=username="$GITHUB_USER" \
   --from-literal=token="$GITHUB_TOKEN" \
+  --from-literal=webhook-secret="$GITHUB_WEBHOOK_SECRET" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 GHCR_AUTH=$(printf '%s:%s' "$GITHUB_USER" "$GITHUB_TOKEN" | base64 | tr -d '\n')
