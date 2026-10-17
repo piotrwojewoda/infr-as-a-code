@@ -27,15 +27,12 @@ controller:
     limits:   { cpu: 500m, memory: 512Mi }
 
 repoServer:
-  # Small single node: serialize manifest generation and give it headroom.
   # 256Mi and even 512Mi were OOMKilled on the Pi when several apps
-  # reconciled at once (e.g. right after a node reboot).
+  # reconciled at once (e.g. right after a node reboot). 1Gi is safe on
+  # the 8 GB node.
   resources:
     requests: { cpu: 25m, memory: 128Mi }
     limits:   { cpu: 300m, memory: 1Gi }
-  env:
-    - name: ARGOCD_REPO_SERVER_PARALLELISM_LIMIT
-      value: "1"
 
 redis:
   resources:
