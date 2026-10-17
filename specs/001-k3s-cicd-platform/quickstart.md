@@ -27,16 +27,16 @@ kubectl apply -f ../apps/root-app.yaml
 On every computer that should reach the platform, add to `/etc/hosts`:
 
 ```text
-192.168.68.52  demo.kreciowo.pl jenkins.kreciowo.pl argocd.kreciowo.pl
+192.168.68.52  kreciowo.pl www.kreciowo.pl demo.kreciowo.pl
 ```
 
 ## Daily use
 
 | Task | Where / How |
 |------|-------------|
-| See the demo app | `https://kreciowo.pl` or `https://www.kreciowo.pl` (**real certificate**, home.pl) — or `https://demo.kreciowo.pl` with the dummy cert |
-| Jenkins UI | `https://jenkins.kreciowo.pl` (admin password: see runbook) |
-| ArgoCD UI | `https://argocd.kreciowo.pl` |
+| See the demo app | `https://kreciowo.pl` / `https://www.kreciowo.pl` (**real certificate**) — alias `https://demo.kreciowo.pl` (dummy cert) |
+| Jenkins UI | `https://kreciowo.pl/jenkins/` (real cert; admin password: see below) |
+| ArgoCD UI | `https://kreciowo.pl/argocd/` (real cert) |
 | Deploy a new app version | merge a pull request to `main` of `demo-symfony-k3s`; wait ≤ 15 min |
 | Watch a deployment | `kubectl -n demo get pods -w` or the ArgoCD UI |
 | Check pipeline | Jenkins UI → job `demo-symfony-k3s` |

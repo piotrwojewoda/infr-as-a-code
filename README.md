@@ -8,8 +8,9 @@ GitOps repository for a single-node **k3s** cluster on a Raspberry Pi 5
 - **CD**: ArgoCD (app-of-apps) applies everything from this repository
 - **Ingress**: Traefik (bundled with k3s) on ports 80/443
 - **TLS**: cert-manager — dummy self-signed certificate now, real one later
-- **Demo app**: Symfony 8 + PHP 8.5 + PostgreSQL at
-  `https://demo.kreciowo.pl` (source: `piotrwojewoda/demo-symfony-k3s`)
+- **Demo app**: Symfony 8 + PHP 8.5 + PostgreSQL at `https://kreciowo.pl`
+  (real cert; tools: `kreciowo.pl/jenkins/`, `kreciowo.pl/argocd/`;
+  source: `piotrwojewoda/demo-symfony-k3s`)
 
 A merge to `main` of an application repository triggers the full chain:
 build → push image → bump `image.tag` here → ArgoCD rollout.

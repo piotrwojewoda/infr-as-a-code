@@ -4,22 +4,32 @@
 
 ## Routing table
 
-| Hostname | Port | Backend service | Namespace | TLS secret | Certificate |
-|----------|------|-----------------|-----------|------------|-------------|
-| `kreciowo.pl` | 443→80 | `demo-symfony` :80 | `demo` | `kreciowo-tls` | **REAL** (home.pl DV, covers kreciowo.pl + www; loaded by operator, expires 2027-04-26) |
-| `www.kreciowo.pl` | 443→80 | `demo-symfony` :80 | `demo` | `kreciowo-tls` | **REAL** (same secret) |
-| `demo.kreciowo.pl` | 443→80 | `demo-symfony` :80 | `demo` | `kreciowo-dummy-tls` | dummy self-signed |
-| `jenkins.kreciowo.pl` | 443→8080 | `jenkins` | `jenkins` | `kreciowo-dummy-tls` | dummy self-signed |
-| `argocd.kreciowo.pl` | 443→80 | `argocd-server` (insecure mode behind proxy) | `argocd` | `argocd-server-tls` (fixed name required by the ArgoCD Helm chart) | dummy self-signed |
+The real certificate (home.pl DV) covers ONLY `kreciowo.pl` +
+`www.kreciowo.pl` (no wildcard). Therefore EVERYTHING is served under the main
+domain with path-based routing; subdomains keep the dummy cert.
+
+| URL | Backend service | Namespace | TLS secret | Certificate |
+|-----|-----------------|-----------|------------|-------------|
+| `https://kreciowo.pl/` | `demo-symfony` :80 | `demo` | `kreciowo-tls` | **REAL** (home.pl DV, expires 2027-04-26; loaded by operator — key never in git) |
+| `https://www.kreciowo.pl/` | `demo-symfony` :80 | `demo` | `kreciowo-tls` | **REAL** (same secret) |
+| `https://kreciowo.pl/jenkins/` | `jenkins` :8080 (controller runs with `--prefix=/jenkins`) | `jenkins` | `kreciowo-tls` | **REAL** (same cert, own secret copy in this namespace) |
+| `https://kreciowo.pl/argocd/` | `argocd-server` :80 (`server.basehref` + `server.rootpath` = `/argocd`) | `argocd` | `argocd-server-tls` (fixed name required by the ArgoCD chart — now holds the REAL cert) | **REAL** |
+| `https://demo.kreciowo.pl/` | `demo-symfony` :80 (alias) | `demo` | `kreciowo-dummy-tls` | dummy self-signed |
 
 - Traefik terminates TLS; backends speak plain HTTP inside the cluster.
 - Port 80 stays open (needed for the ACME HTTP-01 challenge if Let's Encrypt
   is enabled later). A redirect 80→443 is configured globally on Traefik.
-- The operator's real certificate (2026-10-17) does NOT cover subdomains
-  (SAN = kreciowo.pl, www.kreciowo.pl). That is why the app is served on the
-  root domain and `demo.*` keeps the dummy cert. When a wildcard/SAN cert or
-  Let's Encrypt arrives, re-point `clusters/malina/values/demo-symfony.yaml`
-  and re-issue `argocd-server-tls` + `kreciowo-dummy-tls` in `jenkins`.
+- If a wildcard/SAN certificate (or Let's Encrypt) becomes available, move
+  Jenkins/ArgoCD back to subdomains: change `hostName`/`path` in
+  `clusters/malina/bootstrap/jenkins-values.yaml` and `argocd-values.yaml`,
+  drop `jenkinsUriPrefix` + `server.basehref`/`rootpath`, re-issue secrets.
+
+## Note: the same Secret CONTENT exists in three namespaces
+
+Kubernetes TLS secrets are namespaced, so the real cert was loaded three
+times: `kreciowo-tls` (demo), `kreciowo-tls` (jenkins), `argocd-server-tls`
+(argocd). All three are created by the OPERATOR by hand
+(quickstart.md "Swap the dummy certificate", Option B) — never by git.
 
 ## Certificate lifecycle
 
