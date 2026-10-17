@@ -6,7 +6,7 @@
 image:
   # In-cluster registry (NodePort 30500) — see research.md D2 (GHCR fallback).
   repository: 192.168.68.52:30500/demo-symfony-k3s
-  tag: "c156719"
+  tag: "ac75a73"
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []   # in-cluster registry has no auth (LAN only)
