@@ -1,0 +1,23 @@
+# ArgoCD app-of-apps entrypoint for cluster "malina".
+# Applied ONCE by the operator (see bootstrap README). From then on, everything
+# in clusters/malina/apps is managed by ArgoCD itself (Constitution I).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/piotrwojewoda/infr-as-a-code.git
+    targetRevision: main
+    path: clusters/malina/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

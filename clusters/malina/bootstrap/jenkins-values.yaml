@@ -1,0 +1,94 @@
+# Jenkins Helm values for cluster "malina" (chart jenkinsci/jenkins 5.9.69).
+# Everything is Configuration as Code (JCasC + Job DSL). No secrets here —
+# the GitHub PAT comes from the Kubernetes Secret `jenkins-github`
+# (created by 10-install-platform.sh) via env vars.
+
+controller:
+  image:
+    repository: jenkins/jenkins
+    tag: lts-jdk21   # multi-arch (arm64 verified)
+
+  installPlugins:
+    - kubernetes            # pod-based build agents
+    - workflow-aggregator   # pipelines
+    - git
+    - configuration-as-code
+    - job-dsl               # seed jobs from code
+    - credentials-binding
+
+  # Builds run on Kubernetes agents only, never on the controller.
+  numExecutors: 0
+
+  javaOpts: "-Xms512m -Xmx1024m"
+  resources:
+    requests: { cpu: 250m, memory: 1Gi }
+    limits:   { cpu: "2",  memory: 2Gi }
+
+  serviceType: ClusterIP
+  persistence:
+    enabled: true
+    storageClass: local-path
+    size: 8Gi
+
+  ingress:
+    enabled: true
+    apiVersion: networking.k8s.io/v1
+    ingressClassName: traefik
+    hostName: jenkins.kreciowo.pl
+    tls:
+      - secretName: kreciowo-dummy-tls
+        hosts:
+          - jenkins.kreciowo.pl
+
+  # Injected from Kubernetes Secret `jenkins-github` (not from git).
+  containerEnv:
+    - name: GITHUB_USER
+      valueFrom:
+        secretKeyRef: { name: jenkins-github, key: username }
+    - name: GITHUB_TOKEN
+      valueFrom:
+        secretKeyRef: { name: jenkins-github, key: token }
+
+  JCasC:
+    enabled: true
+    defaultConfig: true
+    configScripts:
+      platform-config: |
+        jenkins:
+          systemMessage: "Jenkins on k3s @ Raspberry Pi (malina) - configured as code"
+          numExecutors: 0
+        credentials:
+          system:
+            domainCredentials:
+              - credentials:
+                  - usernamePassword:
+                      scope: GLOBAL
+                      id: "github-pat"
+                      username: "${GITHUB_USER}"
+                      password: "${GITHUB_TOKEN}"
+                      description: "GitHub PAT: ghcr.io push + GitOps repo push"
+        jobs:
+          - script: |
+              pipelineJob('demo-symfony-k3s') {
+                description('Merge to main -> Kaniko build -> push to ghcr.io -> bump GitOps repo tag. Trigger: SCM polling every minute (webhook after router port-forward - see runbook).')
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote { url('https://github.com/piotrwojewoda/demo-symfony-k3s.git') }
+                        branch('*/main')
+                      }
+                    }
+                    scriptPath('Jenkinsfile')
+                    lightweight(true)
+                  }
+                }
+                triggers { scm('* * * * *') }
+              }
+
+agent:
+  enabled: true
+  namespace: jenkins
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: "1",  memory: 1Gi }

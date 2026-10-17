@@ -1,0 +1,33 @@
+# The demo Symfony application.
+# Multi-source app (contract: specs/001-k3s-cicd-platform/contracts/gitops.md):
+#   - source 0: the Helm chart (charts/demo-symfony in this repo)
+#   - source 1: the `values` ref — environment values file that Jenkins bumps
+#               (image.tag) on every release
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-symfony
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"   # after demo-postgres
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/piotrwojewoda/infr-as-a-code.git
+      targetRevision: main
+      path: charts/demo-symfony
+      helm:
+        valueFiles:
+          - $values/clusters/malina/values/demo-symfony.yaml
+    - repoURL: https://github.com/piotrwojewoda/infr-as-a-code.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

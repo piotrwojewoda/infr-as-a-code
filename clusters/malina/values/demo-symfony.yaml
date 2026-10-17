@@ -1,0 +1,17 @@
+# Environment values for the demo-symfony chart on cluster "malina".
+#
+# `image.tag` is the ONLY field modified by the Jenkins pipeline
+# (contract: specs/001-k3s-cicd-platform/contracts/pipeline.md).
+# Format: short git SHA of the app repository, or "latest" before first build.
+image:
+  repository: ghcr.io/piotrwojewoda/demo-symfony-k3s
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+ingress:
+  host: demo.kreciowo.pl
+  tlsSecret: kreciowo-dummy-tls
+
+resources:
+  requests: { cpu: 50m,  memory: 128Mi }
+  limits:   { cpu: 300m, memory: 256Mi }

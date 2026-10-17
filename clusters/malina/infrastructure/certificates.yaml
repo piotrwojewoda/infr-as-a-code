@@ -1,0 +1,51 @@
+# Dummy (self-signed) TLS certificates for all platform hostnames.
+# One Certificate per namespace, because a TLS Secret must live in the same
+# namespace as the Ingress that uses it.
+#
+# The secret names are STABLE: when the real certificate arrives, only
+# `issuerRef.name` changes from `selfsigned-dummy` to `letsencrypt-prod`
+# (plus re-issue). Applications and ingresses stay untouched.
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kreciowo-dummy
+  namespace: demo
+spec:
+  secretName: kreciowo-dummy-tls
+  dnsNames:
+    - kreciowo.pl
+    - "*.kreciowo.pl"
+  issuerRef:
+    name: selfsigned-dummy
+    kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kreciowo-dummy
+  namespace: jenkins
+spec:
+  secretName: kreciowo-dummy-tls
+  dnsNames:
+    - kreciowo.pl
+    - "*.kreciowo.pl"
+  issuerRef:
+    name: selfsigned-dummy
+    kind: ClusterIssuer
+---
+# ArgoCD's Helm chart expects the TLS secret under the fixed name
+# `argocd-server-tls` when `server.ingress.tls: true`.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kreciowo-dummy
+  namespace: argocd
+spec:
+  secretName: argocd-server-tls
+  dnsNames:
+    - kreciowo.pl
+    - "*.kreciowo.pl"
+  issuerRef:
+    name: selfsigned-dummy
+    kind: ClusterIssuer

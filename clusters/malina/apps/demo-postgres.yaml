@@ -1,0 +1,42 @@
+# PostgreSQL for the demo application (Bitnami chart, pinned version).
+# Credentials come from the bootstrap-created Secret `demo-db` — not from git.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-postgres
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"   # database before the app
+spec:
+  project: default
+  source:
+    repoURL: https://charts.bitnami.com/bitnami
+    chart: postgresql
+    targetRevision: 18.12.4   # PostgreSQL 18.6
+    helm:
+      values: |
+        fullnameOverride: demo-postgresql
+        auth:
+          database: demo
+          username: demo
+          existingSecret: demo-db
+          secretKeys:
+            adminPasswordKey: postgres-password
+            userPasswordKey: password
+        primary:
+          persistence:
+            enabled: true
+            storageClass: local-path
+            size: 1Gi
+          resources:
+            requests: { cpu: 50m,  memory: 128Mi }
+            limits:   { cpu: 500m, memory: 512Mi }
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

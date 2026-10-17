@@ -1,0 +1,33 @@
+# Default values for demo-symfony.
+# Cluster-specific overrides live in clusters/<name>/values/demo-symfony.yaml
+# (ArgoCD multi-source application).
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/piotrwojewoda/demo-symfony-k3s
+  tag: "latest"          # overridden per environment; bumped by Jenkins
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: ghcr-pull
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: traefik
+  host: demo.kreciowo.pl
+  tlsSecret: kreciowo-dummy-tls
+
+# References to the bootstrap-created Secret holding APP_SECRET + DATABASE_URL.
+envSecretName: demo-app
+
+resources:
+  requests: { cpu: 50m,  memory: 128Mi }
+  limits:   { cpu: 300m, memory: 256Mi }
+
+probes:
+  path: /healthz

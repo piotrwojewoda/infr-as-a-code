@@ -1,0 +1,40 @@
+# ArgoCD Helm values for cluster "malina" (chart argo/argo-cd 10.10.5).
+# No secrets here — see Constitution III.
+
+global:
+  domain: argocd.kreciowo.pl
+
+configs:
+  params:
+    # TLS is terminated at Traefik; argocd-server speaks plain HTTP inside.
+    server.insecure: true
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hostname: argocd.kreciowo.pl
+    # Uses TLS secret `argocd-server-tls` (issued by cert-manager, see
+    # clusters/malina/infrastructure/certificates.yaml).
+    tls: true
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits:   { cpu: 300m, memory: 256Mi }
+
+controller:
+  resources:
+    requests: { cpu: 50m, memory: 256Mi }
+    limits:   { cpu: 500m, memory: 512Mi }
+
+repoServer:
+  resources:
+    requests: { cpu: 25m, memory: 128Mi }
+    limits:   { cpu: 300m, memory: 256Mi }
+
+redis:
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits:   { cpu: 100m, memory: 128Mi }
+
+dex:
+  enabled: false   # no SSO in a homelab — local admin account only

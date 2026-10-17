@@ -1,0 +1,12 @@
+# Local secrets - NEVER commit (Constitution III)
+*.local.yaml
+*.secrets.yaml
+secrets/
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
