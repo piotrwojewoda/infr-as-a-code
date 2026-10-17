@@ -50,14 +50,53 @@ kubectl -n argocd  get secret argocd-initial-admin-secret -o jsonpath='{.data.pa
 
 ## Swap the dummy certificate for the real one
 
+Two ways. Both keep the SAME secret names, so no application or ingress
+changes are needed (Traefik picks up new secret content automatically).
+
+### Option A — Let's Encrypt via cert-manager (automatic, self-renewing)
+
 1. Make sure DNS for `*.kreciowo.pl` points to the Pi and the router forwards
    ports 80/443 to 192.168.68.52.
-2. `kubectl apply -f clusters/malina/infrastructure/cluster-issuers.yaml`
-   (the `letsencrypt-prod` issuer is already prepared there).
+2. Set a real e-mail in `clusters/malina/infrastructure/cluster-issuers.yaml`
+   (`letsencrypt-prod` issuer is already prepared there).
 3. Change `issuerRef.name` in `clusters/malina/infrastructure/certificates.yaml`
    from `selfsigned-dummy` to `letsencrypt-prod`, commit and push.
-4. Delete the old secrets: `kubectl -n demo delete secret kreciowo-dummy-tls`
-   (same in `jenkins` and `argocd`) — cert-manager re-issues real certificates.
+4. `kubectl apply -f clusters/malina/infrastructure/`
+5. Delete the old secrets: `kubectl -n demo delete secret kreciowo-dummy-tls`
+   (same in `jenkins`; in `argocd` the secret is `argocd-server-tls`) —
+   cert-manager re-issues real certificates into the same secret names.
+
+### Option B — you already have certificate FILES (fullchain.pem + privkey.pem)
+
+The reverse proxy does NOT read certificate files from disk — it reads
+Kubernetes TLS secrets. So the files are only a transport to the cluster:
+
+```bash
+# 1. copy the files to the Pi (any temp directory)
+scp fullchain.pem privkey.pem malina-master@192.168.68.52:~/
+
+# 2. on the Pi: remove the cert-manager Certificates, so it does not
+#    overwrite the secrets with the dummy cert again
+kubectl -n demo    delete certificate kreciowo-dummy
+kubectl -n jenkins delete certificate kreciowo-dummy
+kubectl -n argocd  delete certificate kreciowo-dummy
+#    (also remove clusters/malina/infrastructure/certificates.yaml from git
+#     or keep it for a later return to Option A)
+
+# 3. load the real certificate into the SAME three secrets
+for ns in demo jenkins; do
+  kubectl -n $ns delete secret kreciowo-dummy-tls --ignore-not-found
+  kubectl -n $ns create secret tls kreciowo-dummy-tls \
+    --cert=$HOME/fullchain.pem --key=$HOME/privkey.pem
+done
+kubectl -n argocd delete secret argocd-server-tls --ignore-not-found
+kubectl -n argocd create secret tls argocd-server-tls \
+  --cert=$HOME/fullchain.pem --key=$HOME/privkey.pem
+```
+
+Rules: the cert file must contain the FULL chain (domain + intermediates);
+the key must be unencrypted PEM; the private key NEVER goes to git
+(Constitution III). Renewal with Option B is manual — repeat step 3.
 
 ## Switch the registry to GHCR (once a token with `packages: write` exists)
 
