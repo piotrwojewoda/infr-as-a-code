@@ -1,7 +1,35 @@
 #!/usr/bin/env bash
 # Bootstrap step 0: install k3s + Helm 3 on the Raspberry Pi.
 # Idempotent: safe to re-run. Requires sudo.
+#
+# Fresh-image prerequisites handled here (Debian 12/13 on Raspberry Pi 5):
+#   1. kernel memory cgroup — k3s refuses to start without it
+#      (fatal: "failed to find memory cgroup (v2)"). Fix: append
+#      "cgroup_memory=1 cgroup_enable=memory" to the kernel cmdline, reboot.
+#      If this script changes the cmdline it stops and asks for the reboot;
+#      just run it again afterwards.
+#   2. iptables — without it the k3s installer warns
+#      "Host iptables-save/iptables-restore tools not found" and the pod
+#      network NAT cannot be programmed.
 set -euo pipefail
+
+echo "==> Host prerequisites (memory cgroup, iptables)"
+CMDLINE_FILE=""
+for f in /boot/firmware/cmdline.txt /boot/cmdline.txt; do
+  [ -f "$f" ] && CMDLINE_FILE="$f" && break
+done
+if [ -n "$CMDLINE_FILE" ] && ! grep -q cgroup_memory "$CMDLINE_FILE"; then
+  echo "    enabling memory cgroup in $CMDLINE_FILE"
+  sudo sed -i 's/$/ cgroup_memory=1 cgroup_enable=memory/' "$CMDLINE_FILE"
+  echo "    *** kernel cmdline changed — run 'sudo reboot', then re-run this script ***"
+  exit 0
+fi
+# NOTE: /usr/sbin is not on PATH in non-login shells — check the binary directly.
+if ! command -v iptables >/dev/null 2>&1 && [ ! -x /usr/sbin/iptables ]; then
+  echo "    installing iptables"
+  sudo apt-get update -qq
+  sudo apt-get install -y -qq iptables
+fi
 
 echo "==> Installing k3s (server, default Traefik on 80/443)"
 if ! command -v k3s >/dev/null 2>&1; then
@@ -17,7 +45,12 @@ sudo k3s kubectl get nodes
 
 echo "==> Installing Helm 3"
 if ! helm version --short 2>/dev/null | grep -q '^v3'; then
-  curl -sfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sudo -E bash
+  # The download can fail on a freshly booted Pi (network not fully up) — retry.
+  for attempt in 1 2 3; do
+    curl -sfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sudo -E bash && break
+    echo "    helm install attempt ${attempt} failed — retrying in 10s"
+    sleep 10
+  done
 fi
 helm version --short
 

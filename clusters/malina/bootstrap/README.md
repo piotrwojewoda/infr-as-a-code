@@ -1,5 +1,8 @@
 # Bootstrap — cluster "malina" (Raspberry Pi 5, 192.168.68.52)
 
+> **Rebuilding from an empty SD card? Start with [FROM-SCRATCH.md](FROM-SCRATCH.md)**
+> — the complete verified walkthrough (flashing, kernel cgroups, pitfalls).
+
 Run ONCE on the Pi (order matters):
 
 ```bash
@@ -18,7 +21,7 @@ bash 05-hardening.sh
 #    Images are pushed to and pulled from GitHub Container Registry (GHCR) —
 #    no registry runs on this Pi (spec 004).
 export GITHUB_USER=piotrwojewoda
-export GITHUB_TOKEN='<PAT with repo + read:packages + write:packages>'   # not stored anywhere
+export GITHUB_TOKEN='<classic PAT: repo + write:packages>'   # classic only — GHCR does not accept fine-grained PATs; not stored anywhere
 export GITHUB_WEBHOOK_SECRET="$(openssl rand -hex 32)"   # same value goes into the GitHub webhook
 export DB_PASSWORD="$(openssl rand -hex 16)"
 export JENKINS_ADMIN_PASSWORD="$(openssl rand -hex 12)"

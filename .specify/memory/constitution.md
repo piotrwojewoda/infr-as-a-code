@@ -44,7 +44,7 @@ be deployed by hand. Helm charts are the packaging format for all applications.
 
 ## Technology Constraints
 
-- Cluster: k3s (single server node) on Raspberry Pi 5, Debian 12, ARM64.
+- Cluster: k3s (single server node) on Raspberry Pi 5, Debian 13 (trixie), ARM64.
 - Package format: Helm 3 charts for every deployable component.
 - Ingress: Traefik (bundled with k3s), ports 80 and 443 exposed on the node.
 - TLS: cert-manager issues certificates; a self-signed dummy certificate is
@@ -76,4 +76,5 @@ be deployed by hand. Helm charts are the packaging format for all applications.
 - Every plan and every pull request MUST be checked against these principles.
   A violation must be justified in writing or the change is rejected.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-17 | **Last Amended**: 2026-10-17
+**Version**: 1.0.1 | **Ratified**: 2026-10-17 | **Last Amended**: 2026-10-25
+(1.0.1 PATCH: host OS is Debian 13 "trixie", not 12 — reflashed after SD failure)

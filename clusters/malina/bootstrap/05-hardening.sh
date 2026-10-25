@@ -12,7 +12,8 @@ cd "$(dirname "$0")"
 # The script needs root for sshd/ufw/fail2ban/apt; re-exec with sudo.
 [ "$(id -u)" -eq 0 ] || exec sudo -E bash "$0" "$@"
 
-OPERATOR_USER="${OPERATOR_USER:-malina-master}"
+# Default matches the operator account created by Raspberry Pi Imager.
+OPERATOR_USER="${OPERATOR_USER:-malina}"
 OPERATOR_HOME="$(getent passwd "$OPERATOR_USER" | cut -d: -f6)"
 export DEBIAN_FRONTEND=noninteractive
 
