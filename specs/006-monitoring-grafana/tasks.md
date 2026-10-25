@@ -14,8 +14,10 @@
   `grafana-admin` from `GRAFANA_ADMIN_PASSWORD` (generated when unset)
 - [x] T006 `real-cert.sh`: kreciowo.pl targets gain `monitoring/kreciowo-tls`
 - [x] T007 Docs: FROM-SCRATCH.md §6/§8/§9 (Grafana row, secrets, versions)
-- [ ] T008 Live: secrets created, ArgoCD sync, Prometheus targets up,
+- [x] T008 Live: secrets created, ArgoCD sync, Prometheus targets up,
   dashboard shows per-pod series; FROM-SCRATCH verified rows updated
+  (2026-10-25: all targets `up`, 23 pod series, dashboard uid
+  `pod-resources` provisioned, app `Synced/Healthy`)
 
 ## Verification (T008)
 
