@@ -1,0 +1,59 @@
+# RBAC for Jenkins agent pods (spec 005 — deploy confirmation).
+# Least privilege: agents may only WATCH the demo rollout and NUDGE the
+# ArgoCD app to refresh. They cannot mutate the application Deployment.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jenkins-agent
+  namespace: jenkins
+---
+# Watch the application rollout in the app namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deploy-watcher
+  namespace: demo
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: deploy-watcher
+  namespace: demo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: deploy-watcher
+subjects:
+  - kind: ServiceAccount
+    name: jenkins-agent
+    namespace: jenkins
+---
+# Nudge ArgoCD to sync immediately (refresh annotation on the Application).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: argocd-app-refresher
+  namespace: argocd
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["applications"]
+    verbs: ["get", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argocd-app-refresher
+  namespace: argocd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argocd-app-refresher
+subjects:
+  - kind: ServiceAccount
+    name: jenkins-agent
+    namespace: jenkins

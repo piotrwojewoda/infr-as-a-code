@@ -95,6 +95,9 @@ kubectl apply -f ../infrastructure/traefik-config.yaml
 echo "==> Traefik security: LAN-only admin UIs + public webhook route"
 kubectl apply -f ../infrastructure/traefik-security.yaml
 
+echo "==> Jenkins agent RBAC (spec 005: deploy confirmation)"
+kubectl apply -f ../infrastructure/jenkins-rbac.yaml
+
 cat <<EOF
 
 ============================================================

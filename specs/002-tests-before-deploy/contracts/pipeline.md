@@ -3,6 +3,7 @@
 **Feature**: 002-tests-before-deploy | **Date**: 2026-10-17
 **Supersedes**: the stage list in `specs/001-k3s-cicd-platform/contracts/pipeline.md`
 (001's file is updated to match during implementation).
+**Extended by**: spec 005 (final `Deploy` stage — green build == release live).
 
 ## Trigger
 

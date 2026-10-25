@@ -1,6 +1,8 @@
 # Contract: CI Pipeline (Jenkins)
 
 **Feature**: 001-k3s-cicd-platform | **Date**: 2026-10-17
+**Extended by**: spec 005 (final `Deploy` stage confirms the rollout; agent
+SA `jenkins-agent` + RBAC `infrastructure/jenkins-rbac.yaml`)
 
 ## Trigger
 

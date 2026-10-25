@@ -234,7 +234,9 @@ cluster is managed by git: **every change is a commit**, never a manual
    `application/json`, secret = `GITHUB_WEBHOOK_SECRET` from step 6.
 7. Push a commit to the app's `main` → Jenkins tests → builds → pushes to
    `ghcr.io/piotrwojewoda/...` → bumps `image.tag` in this repo → ArgoCD
-   deploys. Watch with `kubectl -n demo get pods -w`.
+   deploys → **the final `Deploy` stage confirms the rollout** (spec 005:
+   green build == the new pod is live; watch with
+   `kubectl -n demo get pods -w`).
 
 ### Verification checklist
 
@@ -246,7 +248,7 @@ cluster is managed by git: **every change is a commit**, never a manual
 | Firewall | `sudo ufw status` | only 22, 80, 443 + cluster-internal |
 | Old registry | `nc -zv 192.168.68.52 30500` | **refused** (gone since spec 004) |
 | ArgoCD apps | `kubectl -n argocd get applications` | `root-app` + children, `Synced/Healthy` |
-| Pipeline | push to app repo `main` | new GHCR package + new demo pod from `ghcr.io` |
+| Pipeline | push to app repo `main` | build green incl. `Deploy` stage + new demo pod from `ghcr.io` |
 
 ---
 
