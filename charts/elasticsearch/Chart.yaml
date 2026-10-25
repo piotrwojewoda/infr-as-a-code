@@ -1,0 +1,8 @@
+apiVersion: v2
+name: elasticsearch
+description: >-
+  Single-node Elasticsearch for the demo project (spec 007), managed by
+  the ECK operator (installed separately via the elastic-operator ArgoCD
+  app). Sized for the 8 GB Raspberry Pi.
+type: application
+version: 0.1.0

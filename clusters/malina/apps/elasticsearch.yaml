@@ -1,0 +1,23 @@
+# Elasticsearch for the demo project (spec 007) — single node, Pi-sized.
+# Chart lives in this repo (charts/elasticsearch); no environment overrides
+# needed (single cluster) -> single source, no $values ref.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: elasticsearch
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"   # after elastic-operator (wave 0)
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/piotrwojewoda/infr-as-a-code.git
+    targetRevision: main
+    path: charts/elasticsearch
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

@@ -1,0 +1,12 @@
+# Defaults for the demo Elasticsearch cluster (spec 007).
+version: "9.5.5"          # compatible with ECK 3.5.0
+
+heap: 512m                # fixed Xms=Xmx — predictable on the 8 GB Pi
+
+resources:
+  requests: { cpu: 200m, memory: 1228Mi }
+  limits:   { cpu: "1",   memory: 1536Mi }
+
+storage:
+  size: 4Gi
+  storageClass: local-path

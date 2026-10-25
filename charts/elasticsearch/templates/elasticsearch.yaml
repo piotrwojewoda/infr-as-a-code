@@ -1,0 +1,38 @@
+# Single-node Elasticsearch cluster "demo" (spec 007).
+# The ECK operator (elastic-operator app, sync-wave 0) reconciles this CR.
+# Credentials: ECK generates Secret demo-es-elastic-user (never in git).
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: demo
+spec:
+  version: {{ .Values.version | quote }}
+  nodeSets:
+    - name: default
+      count: 1
+      config:
+        # SD card: no memory-mapped index files (spec 006/007 notes)
+        node.store.allow_mmap: false
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              env:
+                - name: ES_JAVA_OPTS
+                  value: "-Xms{{ .Values.heap }} -Xmx{{ .Values.heap }}"
+              resources:
+                requests:
+                  cpu: {{ .Values.resources.requests.cpu | quote }}
+                  memory: {{ .Values.resources.requests.memory | quote }}
+                limits:
+                  cpu: {{ .Values.resources.limits.cpu | quote }}
+                  memory: {{ .Values.resources.limits.memory | quote }}
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: {{ .Values.storage.storageClass | quote }}
+            resources:
+              requests:
+                storage: {{ .Values.storage.size | quote }}

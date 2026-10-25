@@ -1,0 +1,31 @@
+# ECK operator (spec 007) — reconciles the Elasticsearch CRs.
+# Must be Healthy BEFORE the elasticsearch app syncs (sync-wave ordering).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: elastic-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: helm.elastic.co
+    chart: eck-operator
+    targetRevision: 3.5.0
+    helm:
+      releaseName: elastic-operator
+      values: |
+        # trimmed for the 8 GB Pi (chart defaults: req 100m/150Mi, lim 1/1Gi)
+        resources:
+          requests: { cpu: 50m, memory: 128Mi }
+          limits:   { cpu: 200m, memory: 256Mi }
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: elastic-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
