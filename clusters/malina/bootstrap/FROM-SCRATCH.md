@@ -221,10 +221,11 @@ cluster is managed by git: **every change is a commit**, never a manual
      (change it in the UI afterwards, then delete that secret).
 4. DNS/hosts: point `kreciowo.pl` (and optionally `www.`) to
    `192.168.68.52`; forward ports 80/443 on the router for the public site.
-5. Install the real certificate (bought at home.pl, covers `kreciowo.pl` +
-   `www.kreciowo.pl` only): concatenate `certificate.pem` +
-   `intermediate.pem` into `fullchain.pem`, then on the Pi
-   `bash clusters/malina/bootstrap/real-cert.sh fullchain.pem privkey.pem`.
+5. Install the real certificates (bought at home.pl, one per domain —
+   `kreciowo.pl` and `bibop.pl`, each covering apex + `www` only):
+   concatenate `certificate.pem` + `intermediate.pem` into `fullchain.pem`,
+   then on the Pi
+   `bash clusters/malina/bootstrap/real-cert.sh DOMAIN fullchain.pem privkey.pem`.
    `demo.kreciowo.pl` stays on the self-signed dummy cert (no wildcard).
    **Renewal**: same command with the new files (check the expiry with
    `openssl s_client -connect 192.168.68.52:443 -servername kreciowo.pl`).
@@ -266,10 +267,14 @@ Hostnames (all path-based on the apex, spec 003):
 | URL | Access | TLS secret (namespace) |
 |-----|--------|------------------------|
 | `https://kreciowo.pl/` + `www.` | public | `kreciowo-tls` (demo) — REAL cert |
+| `https://bibop.pl/` + `www.` | public | `bibop-tls` (demo) — REAL cert |
 | `https://kreciowo.pl/jenkins` | LAN only | `kreciowo-tls` (jenkins) — REAL cert |
 | `https://kreciowo.pl/jenkins/github-webhook/` | public (GitHub) | `kreciowo-tls` (jenkins) |
 | `https://kreciowo.pl/argocd` | LAN only | `argocd-server-tls` (argocd) — REAL cert |
 | `https://demo.kreciowo.pl` | public | `kreciowo-dummy-tls` (demo) — self-signed |
+
+Both apex domains serve the same demo-symfony app (one ingress, multiple
+hosts — see `clusters/malina/values/demo-symfony.yaml`).
 
 Secrets created by bootstrap (names only — values never in git):
 
@@ -279,7 +284,8 @@ Secrets created by bootstrap (names only — values never in git):
 | `ghcr-push` (docker config) | jenkins | `ghcr-secrets.sh` |
 | `ghcr-pull` (docker config) | demo | `ghcr-secrets.sh` |
 | `demo-db`, `demo-app` | demo | re-run 10-install-platform.sh with new env |
-| `kreciowo-tls` ×2, `argocd-server-tls` | demo, jenkins, argocd | `real-cert.sh` |
+| `kreciowo-tls` ×2, `argocd-server-tls` | demo, jenkins, argocd | `real-cert.sh kreciowo.pl …` |
+| `bibop-tls` | demo | `real-cert.sh bibop.pl …` |
 
 Regular maintenance:
 

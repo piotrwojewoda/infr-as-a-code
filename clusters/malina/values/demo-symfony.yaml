@@ -14,18 +14,24 @@ imagePullSecrets:
   - name: ghcr-pull   # private GHCR package; created by 10-install-platform.sh
 
 ingress:
-  # kreciowo.pl + www use the REAL certificate (home.pl DV, secret loaded by
-  # the operator — never in git). demo.* keeps the dummy cert for now.
+  # kreciowo.pl + www and bibop.pl + www use REAL certificates (home.pl DV,
+  # secrets loaded by the operator via bootstrap/real-cert.sh — never in
+  # git). demo.* keeps the dummy cert for now.
   hosts:
     - host: kreciowo.pl
     - host: www.kreciowo.pl
     - host: demo.kreciowo.pl
+    - host: bibop.pl
+    - host: www.bibop.pl
   tls:
     kreciowo-tls:
       - kreciowo.pl
       - www.kreciowo.pl
     kreciowo-dummy-tls:
       - demo.kreciowo.pl
+    bibop-tls:
+      - bibop.pl
+      - www.bibop.pl
 
 resources:
   requests: { cpu: 50m,  memory: 128Mi }

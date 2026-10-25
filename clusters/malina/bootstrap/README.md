@@ -46,12 +46,12 @@ cd clusters/malina/bootstrap
 GITHUB_USER=piotrwojewoda GITHUB_TOKEN='<PAT>' bash ghcr-secrets.sh
 ```
 
-Install/renew the real kreciowo.pl certificate (files from the operator,
-never from git):
+Install/renew a real certificate, one per domain — `kreciowo.pl`,
+`bibop.pl` (files from the operator, never from git):
 
 ```bash
 cat kreciowo.pl.certificate.pem kreciowo.pl.intermediate.pem > fullchain.pem
-bash real-cert.sh fullchain.pem privkey.pem
+bash real-cert.sh kreciowo.pl fullchain.pem privkey.pem
 ```
 | `demo-db` | demo | PostgreSQL passwords (user + admin) |
 | `demo-app` | demo | `DATABASE_URL`, `APP_SECRET` |
