@@ -249,6 +249,7 @@ cluster is managed by git: **every change is a commit**, never a manual
 | Old registry | `nc -zv 192.168.68.52 30500` | **refused** (gone since spec 004) |
 | ArgoCD apps | `kubectl -n argocd get applications` | `root-app` + children, `Synced/Healthy` |
 | Elasticsearch | `kubectl -n demo get elasticsearch demo` | `Ready`, health `green` |
+| ES authentication | password `kubectl -n demo get secret demo-es-elastic-user -o jsonpath='{.data.elastic}' \| base64 -d` | `curl --cacert demo-es-http-certs-public/ca.crt -u elastic:… https://demo-es-http:9200` returns version 9.5.5 |
 | Pipeline | push to app repo `main` | build green incl. `Deploy` stage + new demo pod from `ghcr.io` |
 
 ---
@@ -320,6 +321,7 @@ Regular maintenance:
 | demo pod `ImagePullBackOff`, message `... ghcr.io/...: not found` | image not pushed to GHCR yet | run the pipeline once (step 8.7) |
 | Browser warns about TLS on `kreciowo.pl` | real cert not installed yet | step 8.5 (`real-cert.sh`) |
 | Grafana: „no data", datasource error | datasource URL ≠ actual Service name (chart 29.x names the server from `server.fullnameOverride`, NOT the root one) | keep `prometheus.server.fullnameOverride: prometheus-server` in `charts/monitoring/values.yaml` in sync with the datasource URL |
+| ArgoCD app with an external Helm chart stuck in `Unknown` / `failed to pull OCI chart` | `repoURL` written without scheme (`helm.elastic.co`) — ArgoCD treats it as an OCI registry | always write the full URL: `https://helm.elastic.co` |
 | Everything lost (SD died) | — | start again at step 1; git + this document rebuild all |
 
 ---

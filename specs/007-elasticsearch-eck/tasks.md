@@ -9,8 +9,10 @@
 - [x] T003 `clusters/malina/apps/elasticsearch.yaml`: chart from this
   repo, ns `demo`, sync-wave 1
 - [x] T004 Docs: FROM-SCRATCH.md versions/secrets/verification rows
-- [ ] T005 Live: operator Healthy → ES `Ready/green`; authenticated query
+- [x] T005 Live: operator Healthy → ES `Ready/green`; authenticated query
   from a demo pod returns version 9.5.5
+  (2026-10-25: `elastic-operator` + `elasticsearch` apps `Synced/Healthy`,
+  ES `Ready/green/9.5.5`, query returned `cluster: demo`, PCA 4 Gi Bound)
 
 ## Verification (T005)
 
