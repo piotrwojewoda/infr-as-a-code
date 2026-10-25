@@ -45,6 +45,14 @@ Rotate the two GHCR Secrets without touching the other secrets:
 cd clusters/malina/bootstrap
 GITHUB_USER=piotrwojewoda GITHUB_TOKEN='<PAT>' bash ghcr-secrets.sh
 ```
+
+Install/renew the real kreciowo.pl certificate (files from the operator,
+never from git):
+
+```bash
+cat kreciowo.pl.certificate.pem kreciowo.pl.intermediate.pem > fullchain.pem
+bash real-cert.sh fullchain.pem privkey.pem
+```
 | `demo-db` | demo | PostgreSQL passwords (user + admin) |
 | `demo-app` | demo | `DATABASE_URL`, `APP_SECRET` |
 

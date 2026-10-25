@@ -1,10 +1,10 @@
-# Dummy (self-signed) TLS certificates for all platform hostnames.
-# One Certificate per namespace, because a TLS Secret must live in the same
-# namespace as the Ingress that uses it.
+# Dummy (self-signed) TLS certificate — demo.kreciowo.pl ONLY.
 #
-# The secret names are STABLE: when the real certificate arrives, only
-# `issuerRef.name` changes from `selfsigned-dummy` to `letsencrypt-prod`
-# (plus re-issue). Applications and ingresses stay untouched.
+# The bought certificate (home.pl DV) has no wildcard SAN, it covers only
+# kreciowo.pl + www.kreciowo.pl. Those hosts use the REAL certificate,
+# installed by `bootstrap/real-cert.sh` into `kreciowo-tls` (demo, jenkins)
+# and `argocd-server-tls` (argocd). The cert and key never enter git
+# (Constitution III).
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -14,38 +14,7 @@ metadata:
 spec:
   secretName: kreciowo-dummy-tls
   dnsNames:
-    - kreciowo.pl
-    - "*.kreciowo.pl"
-  issuerRef:
-    name: selfsigned-dummy
-    kind: ClusterIssuer
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: kreciowo-dummy
-  namespace: jenkins
-spec:
-  secretName: kreciowo-dummy-tls
-  dnsNames:
-    - kreciowo.pl
-    - "*.kreciowo.pl"
-  issuerRef:
-    name: selfsigned-dummy
-    kind: ClusterIssuer
----
-# ArgoCD's Helm chart expects the TLS secret under the fixed name
-# `argocd-server-tls` when `server.ingress.tls: true`.
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: kreciowo-dummy
-  namespace: argocd
-spec:
-  secretName: argocd-server-tls
-  dnsNames:
-    - kreciowo.pl
-    - "*.kreciowo.pl"
+    - demo.kreciowo.pl
   issuerRef:
     name: selfsigned-dummy
     kind: ClusterIssuer

@@ -211,13 +211,17 @@ cluster is managed by git: **every change is a commit**, never a manual
    (`passwd`) — it was only needed for first contact.
 3. ArgoCD admin password:
    `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d`
-4. DNS/hosts: point `kreciowo.pl`, `*.kreciowo.pl` (at least `demo.`,
-   `jenkins.`, `argocd.`) to `192.168.68.52`; forward ports 80/443 on the
-   router for the public site.
-5. GitHub webhook on the app repository:
+4. DNS/hosts: point `kreciowo.pl` (and optionally `www.`) to
+   `192.168.68.52`; forward ports 80/443 on the router for the public site.
+5. Install the real certificate (bought at home.pl, covers `kreciowo.pl` +
+   `www.kreciowo.pl` only): concatenate `certificate.pem` +
+   `intermediate.pem` into `fullchain.pem`, then on the Pi
+   `bash clusters/malina/bootstrap/real-cert.sh fullchain.pem privkey.pem`.
+   `demo.kreciowo.pl` stays on the self-signed dummy cert (no wildcard).
+6. GitHub webhook on the app repository:
    `https://kreciowo.pl/jenkins/github-webhook/`, content type
    `application/json`, secret = `GITHUB_WEBHOOK_SECRET` from step 6.
-6. Push a commit to the app's `main` → Jenkins tests → builds → pushes to
+7. Push a commit to the app's `main` → Jenkins tests → builds → pushes to
    `ghcr.io/piotrwojewoda/...` → bumps `image.tag` in this repo → ArgoCD
    deploys. Watch with `kubectl -n demo get pods -w`.
 

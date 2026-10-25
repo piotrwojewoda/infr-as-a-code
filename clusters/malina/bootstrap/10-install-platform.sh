@@ -67,12 +67,12 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --set crds.enabled=true \
   --wait --timeout 5m
 
-echo "==> ClusterIssuers + dummy TLS certificates"
+echo "==> ClusterIssuers + dummy TLS certificate (demo.kreciowo.pl only)"
 kubectl apply -f ../infrastructure/cluster-issuers.yaml
 kubectl apply -f ../infrastructure/certificates.yaml
-for ns in demo jenkins argocd; do
-  kubectl -n "$ns" wait --for=condition=Ready certificate --all --timeout=180s
-done
+kubectl -n demo wait --for=condition=Ready certificate --all --timeout=180s
+# kreciowo.pl / www / argocd TLS: after this script, install the bought
+# certificate with ./real-cert.sh (files come from the operator, not git).
 
 echo "==> ArgoCD (chart ${ARGOCD_CHART_VERSION})"
 helm upgrade --install argocd argo/argo-cd \
