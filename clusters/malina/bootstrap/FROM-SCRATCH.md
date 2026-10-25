@@ -314,7 +314,7 @@ Platform URLs (specs 003 and 009):
 Both apex domains serve the same demo-symfony app (one ingress, multiple
 hosts — see `clusters/malina/values/demo-symfony.yaml`).
 
-Secrets created by bootstrap (names only — values never in git):
+Secrets created by bootstrap or platform controllers (names only — values never in git):
 
 | Secret | Namespace | Rotated with |
 |--------|-----------|--------------|

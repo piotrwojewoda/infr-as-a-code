@@ -24,8 +24,9 @@ Start with the safe defaults: five pods, 60 seconds, 2 API requests/second.
 
    ```bash
    kubectl -n load-testing get jobs,pods
-   kubectl -n load-testing logs job/kube-burner-002
    kubectl get pods -n kube-burner-load -w
+   # In another terminal:
+   kubectl -n load-testing logs -f job/kube-burner-002
    ```
 
 3. The pods consume CPU for `cpuSeconds`; kube-burner then deletes the

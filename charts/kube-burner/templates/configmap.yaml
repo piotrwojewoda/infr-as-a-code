@@ -49,7 +49,7 @@ data:
           imagePullPolicy: {{"{{"}}.imagePullPolicy{{"}}"}}
           command: ["/bin/sh", "-c"]
           args:
-            - timeout {{"{{"}}.cpuSeconds{{"}}"}}s sh -c 'while :; do :; done'
+            - timeout {{"{{"}}.cpuSeconds{{"}}"}}s sh -c 'while :; do :; done'; exit 0
           resources:
             requests:
               cpu: {{"{{"}}.cpuRequest{{"}}"}}
