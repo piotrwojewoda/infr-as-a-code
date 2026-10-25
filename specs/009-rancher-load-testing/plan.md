@@ -20,6 +20,9 @@
 - Default test: five pods, each limited to 100m CPU and 32Mi memory.
 - kube-burner: 500m CPU and 256Mi memory limit; ten-minute Job deadline.
 - No Secret read permissions, no persistent test resources, no public ingress.
+- Set `KINE_COMPACT_TIMEOUT=5m` on the k3s service. The default five-second
+  SQLite compaction timeout can otherwise stop the whole control plane when
+  Rancher's first-boot writes stall on SD storage.
 
 ## Verification
 

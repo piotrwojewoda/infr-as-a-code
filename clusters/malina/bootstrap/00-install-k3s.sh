@@ -39,6 +39,18 @@ else
   echo "    k3s already installed: $(k3s --version | head -1)"
 fi
 
+# SQLite compaction has a 5s default timeout. On a Raspberry Pi SD card,
+# image pulls and Rancher's first-boot writes can exceed it. database/sql then
+# rolls the transaction back and kine's MustCommit exits the whole k3s process.
+# KINE_COMPACT_TIMEOUT is read by kine also when embedded in k3s.
+KINE_OVERRIDE="/etc/systemd/system/k3s.service.d/90-kine.conf"
+if ! sudo grep -qx 'Environment=KINE_COMPACT_TIMEOUT=5m' "$KINE_OVERRIDE" 2>/dev/null; then
+  echo "==> Datastore resilience: KINE_COMPACT_TIMEOUT=5m"
+  printf '[Service]\nEnvironment=KINE_COMPACT_TIMEOUT=5m\n' | sudo tee "$KINE_OVERRIDE" >/dev/null
+  sudo systemctl daemon-reload
+  sudo systemctl restart k3s
+fi
+
 echo "==> Waiting for node to become Ready"
 until sudo k3s kubectl get nodes 2>/dev/null | grep -q ' Ready'; do sleep 5; done
 sudo k3s kubectl get nodes

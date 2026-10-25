@@ -106,9 +106,11 @@ The script first fixes two **mandatory** host prerequisites (idempotently):
    `Host iptables-save/iptables-restore tools not found`; the script
    installs the package.
 
-Then it installs k3s (server, bundled Traefik on 80/443), waits for the
-node to become `Ready`, installs Helm 3 and copies the kubeconfig to
-`~/.kube/config`.
+Then it installs k3s (server, bundled Traefik on 80/443), sets
+`KINE_COMPACT_TIMEOUT=5m` to prevent SQLite compaction timeouts from stopping
+the control plane on slow SD writes, waits for the node to become `Ready`,
+installs Helm 3 and copies the kubeconfig to `~/.kube/config`. The k3s service
+restarts once when this datastore override is first added.
 
 Expected result:
 
@@ -361,6 +363,7 @@ Regular maintenance:
 | `demo-symfony` pod stuck `CreateContainerConfigError` | a mounted Secret is missing **and** was made mandatory | keep both ES volumes `optional: true` in `charts/demo-symfony/templates/deployment.yaml` |
 | Jenkins init loops on `cp: overwrite ...jpi?` | the init container reruns `yes n \| cp -i` after a restart | keep `controller.initializeOnce: true` and run `15-update-jenkins.sh` |
 | Rancher restarts during first boot; k3s logs slow SQL | the default 2-minute startup probe is too short for CRD creation on SD | keep `startupProbe.failureThreshold: 60` in Rancher values (10 minutes) |
+| k3s exits with `Transaction commit failed` during SQLite compaction | the default 5-second kine compaction timeout is shorter than SD writes | run `00-install-k3s.sh`; keep `KINE_COMPACT_TIMEOUT=5m` in its systemd override |
 | Everything lost (SD died) | — | start again at step 1; git + this document rebuild all |
 
 ---
