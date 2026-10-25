@@ -4,12 +4,14 @@
 # (contract: specs/001-k3s-cicd-platform/contracts/pipeline.md).
 # Format: short git SHA of the app repository, or "latest" before first build.
 image:
-  # In-cluster registry (NodePort 30500) — see research.md D2 (GHCR fallback).
-  repository: 192.168.68.52:30500/demo-symfony-k3s
+  # GitHub Container Registry (spec 004) — images are built and stored in
+  # GHCR, not on the Pi's SD card. See research.md D1.
+  repository: ghcr.io/piotrwojewoda/demo-symfony-k3s
   tag: "95a39cf"
   pullPolicy: IfNotPresent
 
-imagePullSecrets: []   # in-cluster registry has no auth (LAN only)
+imagePullSecrets:
+  - name: ghcr-pull   # private GHCR package; created by 10-install-platform.sh
 
 ingress:
   # kreciowo.pl + www use the REAL certificate (home.pl DV, secret loaded by

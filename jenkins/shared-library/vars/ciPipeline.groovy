@@ -13,8 +13,8 @@
 //   config.testDeps     (optional) [image: ..., command: ...] — dependency-install
 //                                  step run in the same pod workspace before the tests
 //   config.gitopsValues (optional) values file to bump; default clusters/malina/values/<app>.yaml
-//   config.registry     (optional) default 192.168.68.52:30500 (in-cluster, plain HTTP;
-//                                  change for the documented GHCR swap — research 001 D2)
+//   config.registry     (optional) default ghcr.io/piotrwojewoda (GitHub Container
+//                                  Registry — spec 004; images are private, ARM64 only)
 def call(Map config) {
     if (!config?.app) {
         error "ciPipeline: required parameter 'app' is missing (application name, e.g. 'demo-symfony-k3s')"
@@ -30,7 +30,7 @@ def call(Map config) {
     final String testImage = config.testImage
     final Map testDeps = config.testDeps
     final String gitopsValues = config.gitopsValues ?: "clusters/malina/values/${app}.yaml"
-    final String registry = config.registry ?: '192.168.68.52:30500'
+    final String registry = config.registry ?: 'ghcr.io/piotrwojewoda'
     int testStatus = 0
 
     // Optional dependency-install container, only when the app declares testDeps.
@@ -56,6 +56,9 @@ spec:
       image: gcr.io/kaniko-project/executor:v1.24.0-debug
       command: ["/busybox/sleep"]
       args: ["99d"]
+      volumeMounts:
+        - name: ghcr-push
+          mountPath: /kaniko/.docker
     - name: git
       image: alpine/git:2.49.1
       command: ["sleep"]
@@ -64,6 +67,13 @@ spec:
       image: ${testImage}
       command: ["sleep"]
       args: ["99d"]${depsContainer}
+  volumes:
+    - name: ghcr-push
+      secret:
+        secretName: ghcr-push
+        items:
+          - key: .dockerconfigjson
+            path: config.json
 """
             }
         }
@@ -136,7 +146,6 @@ spec:
                             /kaniko/executor \\
                               --context="${WORKSPACE}" \\
                               --dockerfile=Dockerfile \\
-                              --insecure \\
                               --destination="${IMAGE}:${IMAGE_TAG}" \\
                               --destination="${IMAGE}:latest"
                         '''

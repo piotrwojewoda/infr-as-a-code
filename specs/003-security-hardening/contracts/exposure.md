@@ -23,7 +23,6 @@ added here first (GitOps: the matrix is the review checklist for exposure).
 | 22 | any (router does not forward it today) | sshd, public-key only |
 | 80 | any | Traefik → redirect to 443 |
 | 443 | any | Traefik (matrix above) |
-| 30500 | `192.168.0.0/16` only | in-cluster image registry (NodePort) |
 | 6443 | node-local | k3s apiserver |
 | 8472/udp | node-local | flannel VXLAN |
 | 10250 | node-local | kubelet |

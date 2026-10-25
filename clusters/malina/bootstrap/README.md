@@ -15,8 +15,10 @@ bash 00-install-k3s.sh
 bash 05-hardening.sh
 
 # 3. Platform: cert-manager + dummy certs, ArgoCD, Jenkins
+#    Images are pushed to and pulled from GitHub Container Registry (GHCR) —
+#    no registry runs on this Pi (spec 004).
 export GITHUB_USER=piotrwojewoda
-export GITHUB_TOKEN='<PAT with repo + packages scope>'   # not stored anywhere
+export GITHUB_TOKEN='<PAT with repo + read:packages + write:packages>'   # not stored anywhere
 export GITHUB_WEBHOOK_SECRET="$(openssl rand -hex 32)"   # same value goes into the GitHub webhook
 export DB_PASSWORD="$(openssl rand -hex 16)"
 export JENKINS_ADMIN_PASSWORD="$(openssl rand -hex 12)"
@@ -32,7 +34,14 @@ What is created outside git (Constitution III):
 |--------|-----------|---------|
 | `jenkins-github` | jenkins | GitHub user + PAT (pipeline pushes) |
 | `ghcr-push` | jenkins | docker config for Kaniko pushes to ghcr.io |
-| `ghcr-pull` | demo | docker config for pulling app images |
+| `ghcr-pull` | demo | docker config for pulling private app images from ghcr.io |
+
+Rotate the two GHCR Secrets without touching the other secrets:
+
+```bash
+cd clusters/malina/bootstrap
+GITHUB_USER=piotrwojewoda GITHUB_TOKEN='<PAT>' bash ghcr-secrets.sh
+```
 | `demo-db` | demo | PostgreSQL passwords (user + admin) |
 | `demo-app` | demo | `DATABASE_URL`, `APP_SECRET` |
 
@@ -53,6 +62,10 @@ secrets applied idempotently).
   Details: `specs/003-security-hardening/contracts/exposure.md`.
 - Security updates install automatically, but the host never reboots itself:
   check `cat /var/run/reboot-required` monthly and reboot when asked.
+- The old in-cluster registry (NodePort 30500) is gone since spec 004. If an
+  older install still runs it, follow
+  `specs/004-ghcr-image-hosting/quickstart.md` step 3 (delete the namespace,
+  the containerd mirror and the ufw rule).
 - Lockout recovery: if all SSH keys are lost, log in physically on the Pi
   and delete `/etc/ssh/sshd_config.d/99-malina.conf`, then `systemctl
   restart ssh.socket` (or `ssh.service`).

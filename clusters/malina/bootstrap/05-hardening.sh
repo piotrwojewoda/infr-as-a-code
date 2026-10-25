@@ -71,7 +71,6 @@ ufw default allow outgoing
 ufw allow 22/tcp comment 'ssh'
 ufw allow 80/tcp comment 'http'
 ufw allow 443/tcp comment 'https'
-ufw allow from 192.168.0.0/16 to any port 30500 proto tcp comment 'in-cluster registry (LAN builds only)'
 ufw allow in on lo comment 'loopback'
 ufw allow out on lo comment 'loopback'
 # k3s internals — never block cluster traffic (FR-007)

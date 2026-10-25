@@ -122,11 +122,10 @@ pipelines run) and the update service is active.
   access to the Pi — documented in the runbook.
 - A client on the LAN with a spoofed User-Agent is irrelevant — the
   restriction is by source address, not headers.
-- Kubernetes internal traffic (pods, services, image registry on the node,
-  localhost) MUST NOT be affected by the firewall rules.
-- The in-cluster registry (node port 30500) is LAN-only by design; the
-  firewall must keep it reachable for builds on the LAN but it is never
-  forwarded by the router.
+- Kubernetes internal traffic (pods, services, localhost) MUST NOT be
+  affected by the firewall rules.
+- Since spec 004 there is no registry on the node: images come from GitHub
+  Container Registry over outbound HTTPS, so no extra inbound port is needed.
 
 ## Requirements *(mandatory)*
 

@@ -114,17 +114,15 @@ Rules: the cert file must contain the FULL chain (domain + intermediates);
 the key must be unencrypted PEM; the private key NEVER goes to git
 (Constitution III). Renewal with Option B is manual — repeat step 3.
 
-## Switch the registry to GHCR (once a token with `packages: write` exists)
+## Registry: GitHub Container Registry (since spec 004)
 
-1. Update the secrets: re-run the secret part of `10-install-platform.sh` with
-   the new `GITHUB_TOKEN` (it re-creates `ghcr-pull` / `ghcr-push` / `jenkins-github`).
-2. In `clusters/malina/values/demo-symfony.yaml`: set
-   `image.repository: ghcr.io/piotrwojewoda/demo-symfony-k3s` and
-   `imagePullSecrets: [{ name: ghcr-pull }]`. Commit + push.
-3. In the app repo `Jenkinsfile`: set `env.IMAGE` to
-   `ghcr.io/piotrwojewoda/demo-symfony-k3s`, drop the `--insecure` flag, and
-   re-add the `ghcr-config` volume (see git history for the GHCR variant).
-4. Delete the registry: `kubectl delete -f clusters/malina/infrastructure/registry.yaml`.
+The platform pushes and pulls images from `ghcr.io/piotrwojewoda/<app>`
+(private, ARM64). `10-install-platform.sh` creates `ghcr-push` (Jenkins) and
+`ghcr-pull` (demo) from a PAT with `repo`, `read:packages` and
+`write:packages`. Use `bash ghcr-secrets.sh` to rotate only those two Secrets.
+Kaniko mounts `ghcr-push` at `/kaniko/.docker`; no `--insecure` flag is used.
+The old in-cluster registry and NodePort 30500 are gone. Migration and
+cleanup: [spec 004 quickstart](../004-ghcr-image-hosting/quickstart.md).
 
 ## Troubleshooting (learned during the first production run)
 
@@ -134,7 +132,7 @@ the key must be unencrypted PEM; the private key NEVER goes to git
 | An ArgoCD app stays `Unknown` with a stale `connection refused` to the repo-server | comparison error cached while repo-server was down | `kubectl -n argocd annotate application <app> argocd.argoproj.io/refresh=hard --overwrite` |
 | repo-server OOMKilled | limit too low for parallel chart renders on a small node | already fixed in `argocd-values.yaml` (1Gi) — keep it |
 | Build fails with `dubious ownership in repository` | mixed uids in the Jenkins agent pod | already handled in the Jenkinsfile (`safe.directory`) |
-| `docker push` to ghcr.io: `DENIED: permission_denied` | PAT lacks Packages:write | the platform uses the in-cluster registry (research.md D2); see "Switch the registry to GHCR" above |
+| `docker push` to ghcr.io: `DENIED: permission_denied` | PAT lacks `write:packages` | create a PAT with `repo` + `read:packages` + `write:packages`, run `bash ghcr-secrets.sh` (spec 004) |
 
 ## Rebuild everything from scratch
 

@@ -74,7 +74,8 @@ to be executed on the rebuilt cluster.
   - `default deny incoming`, `default allow outgoing`,
   - allow `22/tcp`, `80/tcp`, `443/tcp` from anywhere,
   - allow the cluster registry `30500/tcp` from `192.168.0.0/16` (LAN builds;
-    never router-forwarded),
+    never router-forwarded) — **removed by spec 004** when the registry moved
+    to GHCR,
   - allow cluster-internal traffic on the pod/service networks
     (`10.42.0.0/16` pods, `10.43.0.0/16` services) and on the loopback and
     `cni0`/`flannel*` interfaces,

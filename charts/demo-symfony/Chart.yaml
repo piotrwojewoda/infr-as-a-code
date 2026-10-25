@@ -2,7 +2,7 @@ apiVersion: v2
 name: demo-symfony
 description: Symfony 8 / PHP 8.5 demo application (start page) on k3s
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "1.0.0"
 keywords:
   - symfony

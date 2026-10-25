@@ -7,6 +7,7 @@
 # Required environment variables:
 #   GITHUB_USER            GitHub username
 #   GITHUB_TOKEN           GitHub PAT with repo + packages (read/write) scope
+#                          (spec 004: images live in GHCR, never on the Pi)
 #   GITHUB_WEBHOOK_SECRET  shared secret for the GitHub -> Jenkins webhook
 #   DB_PASSWORD            password for the demo PostgreSQL database
 #   JENKINS_ADMIN_PASSWORD initial Jenkins admin password
@@ -38,19 +39,8 @@ kubectl -n jenkins create secret generic jenkins-github \
   --from-literal=webhook-secret="$GITHUB_WEBHOOK_SECRET" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-GHCR_AUTH=$(printf '%s:%s' "$GITHUB_USER" "$GITHUB_TOKEN" | base64 | tr -d '\n')
-GHCR_CFG=$(printf '{"auths":{"ghcr.io":{"username":"%s","password":"%s","auth":"%s"}}}' \
-  "$GITHUB_USER" "$GITHUB_TOKEN" "$GHCR_AUTH")
-# pull secret for application pods (demo) ...
-kubectl -n demo create secret generic ghcr-pull \
-  --type=kubernetes.io/dockerconfigjson \
-  --from-literal=.dockerconfigjson="$GHCR_CFG" \
-  --dry-run=client -o yaml | kubectl apply -f -
-# ... and push config for Kaniko build pods (jenkins)
-kubectl -n jenkins create secret generic ghcr-push \
-  --type=kubernetes.io/dockerconfigjson \
-  --from-literal=.dockerconfigjson="$GHCR_CFG" \
-  --dry-run=client -o yaml | kubectl apply -f -
+# GHCR pull/push Secrets (spec 004) — rotate with ./ghcr-secrets.sh
+GITHUB_USER="$GITHUB_USER" GITHUB_TOKEN="$GITHUB_TOKEN" bash ./ghcr-secrets.sh
 
 kubectl -n demo create secret generic demo-db \
   --from-literal=password="$DB_PASSWORD" \
@@ -76,22 +66,6 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --version "$CERT_MANAGER_VERSION" \
   --set crds.enabled=true \
   --wait --timeout 5m
-
-echo "==> In-cluster registry + containerd insecure-mirror config"
-# containerd must pull from the HTTP registry at <node-ip>:30500
-NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-if ! grep -q "$NODE_IP:30500" /etc/rancher/k3s/registries.yaml 2>/dev/null; then
-  echo "    writing /etc/rancher/k3s/registries.yaml (needs sudo) and restarting k3s"
-  sudo tee /etc/rancher/k3s/registries.yaml >/dev/null <<YAML
-mirrors:
-  "${NODE_IP}:30500":
-    endpoint:
-      - "http://${NODE_IP}:30500"
-YAML
-  sudo systemctl restart k3s
-  until kubectl get nodes 2>/dev/null | grep -q ' Ready'; do sleep 5; done
-fi
-kubectl apply -f ../infrastructure/registry.yaml
 
 echo "==> ClusterIssuers + dummy TLS certificates"
 kubectl apply -f ../infrastructure/cluster-issuers.yaml

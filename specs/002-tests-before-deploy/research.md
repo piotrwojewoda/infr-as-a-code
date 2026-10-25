@@ -142,6 +142,6 @@ come from the live platform installed by feature 001.
 | Jenkins runs on the cluster with JCasC + Job DSL from `jenkins-values.yaml` | 001 implementation | confirmed |
 | Builds run on Kubernetes agents; controller has 0 executors | `jenkins-values.yaml` | confirmed |
 | GitHub PAT available as Jenkins credential `github-pat` | JCasC in `jenkins-values.yaml` | confirmed |
-| Registry is the in-cluster NodePort 30500 (plain HTTP, Kaniko `--insecure`) | 001 research D2 / pipeline contract | confirmed |
+| Registry is GitHub Container Registry (spec 004, private, authenticated) | 004 research / contracts/registry.md | current |
 | `php:8.5-cli` official image is multi-arch incl. arm64 | Docker Hub registry API manifest list | confirmed 2026-10-17 (386/amd64/arm/arm64/ppc64le/riscv64/s390x) |
 | `composer:2` official image is multi-arch incl. arm64 | Docker Hub registry API manifest list | confirmed 2026-10-17 (same platform set) |

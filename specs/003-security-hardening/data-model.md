@@ -37,7 +37,7 @@ before any application code runs.
 | `bruteForce` | 5 failed SSH attempts within 10 min ⇒ source banned for 1 h |
 | `firewallDefault` | inbound deny, outbound allow |
 | `firewallAllowPublic` | TCP 22, 80, 443 from any source |
-| `firewallAllowLan` | TCP 30500 (in-cluster registry) from `192.168.0.0/16` only |
+| `firewallAllowLan` | none extra since spec 004 (no in-cluster registry) |
 | `firewallAllowCluster` | pod CIDR `10.42.0.0/16`, service CIDR `10.43.0.0/16`, loopback, `cni0`/`flannel*` interfaces, VXLAN `8472/udp`, kubelet `10250/tcp` node-local |
 | `updates` | Debian security updates installed automatically; no automatic reboot |
 

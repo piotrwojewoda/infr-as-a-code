@@ -91,7 +91,7 @@ controller:
         jobs:
           - script: |
               pipelineJob('demo-symfony-k3s') {
-                description('Merge to main -> ciPipeline (global shared library "malina-ci"): mandatory Test stage (ci/test.sh) -> Kaniko build -> push to in-cluster registry -> bump GitOps repo tag. Trigger: GitHub webhook -> https://kreciowo.pl/jenkins/github-webhook/ (no polling).')
+                description('Merge to main -> ciPipeline (global shared library "malina-ci"): mandatory Test stage (ci/test.sh) -> Kaniko build -> push to GitHub Container Registry (ghcr.io) -> bump GitOps repo tag. Trigger: GitHub webhook -> https://kreciowo.pl/jenkins/github-webhook/ (no polling).')
                 definition {
                   cpsScm {
                     scm {

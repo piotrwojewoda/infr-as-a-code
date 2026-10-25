@@ -17,6 +17,11 @@ fact was tested against the real environment on 2026-10-17.
 
 ## D2 — Container registry: in-cluster `registry:2` (fallback), GHCR later
 
+> **Superseded on 2026-10-25 by [spec 004](../../004-ghcr-image-hosting/spec.md).**
+> The platform now uses GHCR only. Everything below is kept as history; the
+> in-cluster registry (Deployment, PVC, NodePort 30500, containerd mirror) was
+> removed because its writes wore out the SD card.
+
 - **Decision (updated 2026-10-17)**: Run `registry:2` in the cluster
   (namespace `registry`, PVC, **NodePort 30500** on the node). Kaniko pushes
   over plain HTTP (`--insecure`); containerd pulls through a `mirrors` entry

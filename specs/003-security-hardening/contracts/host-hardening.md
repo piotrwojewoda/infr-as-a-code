@@ -40,13 +40,12 @@ Then validate with `sshd -t` and restart SSH (Debian 12: restart
 - Install `ufw` and apply, in this order:
   1. `default deny incoming`, `default allow outgoing`
   2. allow `22/tcp`, `80/tcp`, `443/tcp` from anywhere
-  3. allow `30500/tcp` from `192.168.0.0/16`
-  4. allow all traffic on `lo`
-  5. allow all traffic to/from the pod network `10.42.0.0/16` and the
+  3. allow all traffic on `lo`
+  4. allow all traffic to/from the pod network `10.42.0.0/16` and the
      service network `10.43.0.0/16`
-  6. allow traffic on interfaces `cni0` and `flannel*` (any direction)
-  7. allow `8472/udp` and `10250/tcp` from `192.168.0.0/16`
-  8. allow forwarding between the pod CIDR and the node (so ServiceLB DNAT
+  5. allow traffic on interfaces `cni0` and `flannel*` (any direction)
+  6. allow `8472/udp` and `10250/tcp` from `192.168.0.0/16`
+  7. allow forwarding between the pod CIDR and the node (so ServiceLB DNAT
      works); do NOT set a global "allow routed" policy
 - Enable ufw (non-interactive, `ufw --force enable`).
 - **Never** run `ufw reset` on an existing install (idempotency: add rules

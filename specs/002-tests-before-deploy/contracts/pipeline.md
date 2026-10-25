@@ -36,7 +36,7 @@ to `https://kreciowo.pl/jenkins/github-webhook/` (`githubPush()` trigger).
 | `testImage` | yes | container image the test suite runs in; MUST support `linux/arm64` |
 | `testDeps` | no | `[image, command]` — dependency-install step run in the same pod workspace before the tests |
 | `gitopsValues` | no | values file bumped per release; default `clusters/malina/values/<app>.yaml` (the demo app passes `clusters/malina/values/demo-symfony.yaml`) |
-| `registry` | no | image registry prefix; default `192.168.68.52:30500` (in-cluster). Change for the documented GHCR swap (research 001 D2) |
+| `registry` | no | image registry prefix; default `ghcr.io/piotrwojewoda` (spec 004). An app must not override it with the removed in-cluster registry |
 
 ## Stages (fixed order, all named)
 
@@ -51,8 +51,8 @@ to `https://kreciowo.pl/jenkins/github-webhook/` (`githubPush()` trigger).
    5. publish the report with the `junit` step.
    The whole stage is wrapped in `timeout(15)`.
 3. **Build & Push** — unchanged: Kaniko builds the app repo `Dockerfile` and
-   pushes `192.168.68.52:30500/<app>:<short-sha>` (+ `:latest`) with
-   `--insecure`.
+   pushes `ghcr.io/piotrwojewoda/<app>:<short-sha>` (+ `:latest`) with the
+   `ghcr-push` Secret mounted at `/kaniko/.docker` (no `--insecure`).
 4. **Update GitOps repo** — unchanged: set `image.tag: <short-sha>` in
    `clusters/malina/values/<app>.yaml`, commit
    `chore(release): <app> <short-sha>`, push to `main` (credential
