@@ -10,7 +10,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: helm.elastic.co
+    # NOTE: the scheme is required — without `https://` ArgoCD treats the
+    # repoURL as an OCI registry (oci://helm.elastic.co/…) and the pull fails.
+    repoURL: https://helm.elastic.co
     chart: eck-operator
     targetRevision: 3.5.0
     helm:
