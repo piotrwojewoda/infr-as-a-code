@@ -33,7 +33,8 @@ cleans up `kube-burner-load`, and cannot read Kubernetes Secrets.
 - **FR-001**: Rancher chart 2.15.2 is deployed by ArgoCD in `cattle-system`,
   with one replica and Pi-sized resource requests/limits.
 - **FR-002**: Rancher uses the existing Traefik and cert-manager, is LAN-only,
-  and has a generated bootstrap password (never a password in values/git).
+  has a generated bootstrap password (never a password in values/git), and has
+  a ten-minute startup probe for slow first-boot CRD creation on SD storage.
 - **FR-003**: kube-burner 2.8.6 is packaged as a Helm chart and managed by an
   ArgoCD application in `load-testing`.
 - **FR-004**: the load Job is disabled by default. Each run has a unique

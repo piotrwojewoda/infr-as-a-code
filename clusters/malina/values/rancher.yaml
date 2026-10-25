@@ -2,6 +2,10 @@
 hostname: rancher.kreciowo.pl
 replicas: 1
 addLocal: "true"
+# First boot creates many CRDs and can exceed the chart's 2-minute default
+# on a Raspberry Pi SD card. Do not restart Rancher during that initial work.
+startupProbe:
+  failureThreshold: 60  # 60 x 10s = 10 minutes
 bootstrapPassword: ""  # random; read it from the initial Rancher pod logs
 resources:
   requests:

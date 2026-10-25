@@ -58,7 +58,9 @@ bash real-cert.sh kreciowo.pl fullchain.pem privkey.pem
 | `demo-app` | demo | `DATABASE_URL`, `APP_SECRET` |
 
 Re-running `10-install-platform.sh` is safe (`helm upgrade --install`,
-secrets applied idempotently).
+secrets applied idempotently). For a Jenkins values-only change, use
+`bash 15-update-jenkins.sh` instead: it preserves runtime-only Helm values,
+including the admin password, and does not ask for GitHub tokens.
 
 ## Hardening notes (spec 003)
 

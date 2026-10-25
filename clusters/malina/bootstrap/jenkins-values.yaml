@@ -33,6 +33,11 @@ controller:
     limits:   { cpu: "2",  memory: 2Gi }
 
   serviceType: ClusterIP
+
+  # The init container is restarted with the pod. Never re-run plugin downloads
+  # and the interactive `yes n | cp -i ...` step after a successful first init.
+  initializeOnce: true
+
   persistence:
     enabled: true
     storageClass: local-path

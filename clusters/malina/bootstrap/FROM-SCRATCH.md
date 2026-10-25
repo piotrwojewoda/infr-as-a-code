@@ -336,6 +336,9 @@ Regular maintenance:
   itself — check `cat /var/run/reboot-required` monthly.
 - **Re-running bootstrap is safe**: all scripts are idempotent
   (`helm upgrade --install`, secrets applied declaratively).
+- **Jenkins values-only changes**: run `bash 15-update-jenkins.sh`. It uses
+  `--reuse-values`, so the runtime admin password and other Secrets stay
+  unchanged; no GitHub token is needed.
 
 ---
 
@@ -356,6 +359,8 @@ Regular maintenance:
 | ArgoCD app `elasticsearch` shows **Progressing** while the CR is `Ready` | cluster health `yellow`: a replica can never be assigned on a single node, so one shard stays unassigned | app creates/repairs indices with `number_of_replicas: 0` (index template `demo-documents`); manual fix: `PUT /documents/_settings {"index":{"number_of_replicas":0}}` |
 | ECK condition `ResourcesAwareManagement=False` | `requests.memory` ≠ `limits.memory` in the ES pod template | harmless on this size — set them equal in `charts/elasticsearch/values.yaml` if you want memory-aware node roles |
 | `demo-symfony` pod stuck `CreateContainerConfigError` | a mounted Secret is missing **and** was made mandatory | keep both ES volumes `optional: true` in `charts/demo-symfony/templates/deployment.yaml` |
+| Jenkins init loops on `cp: overwrite ...jpi?` | the init container reruns `yes n \| cp -i` after a restart | keep `controller.initializeOnce: true` and run `15-update-jenkins.sh` |
+| Rancher restarts during first boot; k3s logs slow SQL | the default 2-minute startup probe is too short for CRD creation on SD | keep `startupProbe.failureThreshold: 60` in Rancher values (10 minutes) |
 | Everything lost (SD died) | — | start again at step 1; git + this document rebuild all |
 
 ---
