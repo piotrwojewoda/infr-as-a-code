@@ -1,0 +1,35 @@
+# Monitoring stack (spec 006): Prometheus + Grafana, pod load dashboards.
+# Multi-source app (same contract as demo-symfony):
+#   - source 0: the umbrella Helm chart (charts/monitoring in this repo;
+#               ArgoCD runs `helm dependency build` for the pinned
+#               prometheus/grafana subcharts)
+#   - source 1: the `values` ref — environment values for cluster "malina"
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"   # infra/observability before apps
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/piotrwojewoda/infr-as-a-code.git
+      targetRevision: main
+      path: charts/monitoring
+      helm:
+        releaseName: monitoring
+        valueFiles:
+          - $values/clusters/malina/values/monitoring.yaml
+    - repoURL: https://github.com/piotrwojewoda/infr-as-a-code.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

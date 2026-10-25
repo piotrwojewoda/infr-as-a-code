@@ -263,6 +263,8 @@ Pinned versions (source of truth: `10-install-platform.sh`):
 | cert-manager | v1.21.2 |
 | ArgoCD | chart 10.10.5 (app v3.5.5) |
 | Jenkins | chart 5.9.69 (2.580.1 LTS) |
+| Prometheus | chart 29.38.0 (v3.15.1), retention 24h, PVC 2 Gi (spec 006) |
+| Grafana | chart 10.5.15 (12.3.1), PVC 500 Mi (spec 006) |
 
 Hostnames (all path-based on the apex, spec 003):
 
@@ -273,6 +275,7 @@ Hostnames (all path-based on the apex, spec 003):
 | `https://kreciowo.pl/jenkins` | LAN only | `kreciowo-tls` (jenkins) — REAL cert |
 | `https://kreciowo.pl/jenkins/github-webhook/` | public (GitHub) | `kreciowo-tls` (jenkins) |
 | `https://kreciowo.pl/argocd` | LAN only | `argocd-server-tls` (argocd) — REAL cert |
+| `https://kreciowo.pl/grafana` | LAN only | `kreciowo-tls` (monitoring) — REAL cert |
 | `https://demo.kreciowo.pl` | public | `kreciowo-dummy-tls` (demo) — self-signed |
 
 Both apex domains serve the same demo-symfony app (one ingress, multiple
@@ -286,7 +289,8 @@ Secrets created by bootstrap (names only — values never in git):
 | `ghcr-push` (docker config) | jenkins | `ghcr-secrets.sh` |
 | `ghcr-pull` (docker config) | demo | `ghcr-secrets.sh` |
 | `demo-db`, `demo-app` | demo | re-run 10-install-platform.sh with new env |
-| `kreciowo-tls` ×2, `argocd-server-tls` | demo, jenkins, argocd | `real-cert.sh kreciowo.pl …` |
+| `kreciowo-tls` ×3, `argocd-server-tls` | demo, jenkins, monitoring, argocd | `real-cert.sh kreciowo.pl …` |
+| `grafana-admin` | monitoring | re-run 10-install-platform.sh with `GRAFANA_ADMIN_PASSWORD` |
 | `bibop-tls` | demo | `real-cert.sh bibop.pl …` |
 
 Regular maintenance:

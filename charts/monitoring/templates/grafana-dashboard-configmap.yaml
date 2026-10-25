@@ -1,0 +1,11 @@
+# "Pod resources" dashboard as code (Constitution II) — the Grafana
+# sidecar (label grafana_dashboard=1) loads it automatically.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-pod-resources
+  labels:
+    grafana_dashboard: "1"
+data:
+  pod-resources.json: |-
+{{ .Files.Get "dashboards/pod-resources.json" | indent 4 }}

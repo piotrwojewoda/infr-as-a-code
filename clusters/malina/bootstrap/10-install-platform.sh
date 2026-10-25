@@ -28,7 +28,7 @@ ARGOCD_CHART_VERSION="10.10.5"   # ArgoCD app v3.5.5
 JENKINS_CHART_VERSION="5.9.69"   # Jenkins 2.580.1 LTS
 
 echo "==> Namespaces"
-for ns in cert-manager argocd jenkins demo; do
+for ns in cert-manager argocd jenkins demo monitoring; do
   kubectl create namespace "$ns" --dry-run=client -o yaml | kubectl apply -f -
 done
 
@@ -51,6 +51,13 @@ APP_SECRET_VAL="${APP_SECRET:-$(openssl rand -hex 16)}"
 kubectl -n demo create secret generic demo-app \
   --from-literal=DATABASE_URL="postgresql://demo:${DB_PASSWORD}@demo-postgresql:5432/demo?serverVersion=18&charset=utf8" \
   --from-literal=APP_SECRET="$APP_SECRET_VAL" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# Grafana admin (spec 006) — generated when not provided
+GRAFANA_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-$(openssl rand -hex 12)}"
+kubectl -n monitoring create secret generic grafana-admin \
+  --from-literal=username="admin" \
+  --from-literal=password="$GRAFANA_ADMIN_PASSWORD" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> Helm repositories"

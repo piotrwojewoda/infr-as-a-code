@@ -1,0 +1,79 @@
+# Defaults for the monitoring umbrella chart (spec 006).
+# Environment-specific bits (hosts, TLS) live in
+# clusters/malina/values/monitoring.yaml.
+
+# Short, predictable resource names (prometheus-server, grafana).
+prometheus:
+  fullnameOverride: prometheus
+  # KISS on one Pi: server only, no alertmanager/pushgateway/exporters.
+  # NOTE: the condition keys in chart 29.x use dashes (see its Chart.yaml).
+  alertmanager:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  server:
+    retention: 24h            # SD-card friendly (spec 006 notes)
+    persistentVolume:
+      enabled: true
+      size: 2Gi
+      storageClass: local-path
+    resources:
+      requests: { cpu: 100m, memory: 300Mi }
+      limits:   { cpu: 500m, memory: 768Mi }
+  # No serverFiles override on purpose: the chart's default scrape set
+  # already includes `kubernetes-nodes-cadvisor` (kubelet /metrics/cadvisor
+  # over https with the SA token) which provides all per-pod CPU/memory
+  # metrics. Overriding would APPEND jobs, not replace them (chart 29.x).
+
+grafana:
+  fullnameOverride: grafana
+  # no test pods — ArgoCD would run helm test hooks on every sync
+  testFramework:
+    enabled: false
+  # Admin credentials come from Secret `grafana-admin` (created by
+  # 10-install-platform.sh from GRAFANA_ADMIN_PASSWORD — never in git).
+  admin:
+    existingSecret: grafana-admin
+    userKey: username
+    passwordKey: password
+  persistence:
+    enabled: true
+    size: 500Mi
+    storageClass: local-path
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits:   { cpu: 250m, memory: 384Mi }
+  "grafana.ini":
+    server:
+      root_url: https://kreciowo.pl/grafana
+      serve_from_sub_path: true
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          uid: prometheus          # stable uid — dashboard JSON references it
+          type: prometheus
+          access: proxy
+          url: http://prometheus-server
+          isDefault: true
+  sidecar:
+    dashboards:
+      enabled: true                # picks up ConfigMaps labeled grafana_dashboard=1
+      label: grafana_dashboard
+      labelValue: "1"
+      folder: /tmp/dashboards
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      # spec 003: admin UIs are LAN-only
+      traefik.ingress.kubernetes.io/router.middlewares: kube-system-lan-only@kubernetescrd
+    hosts: []       # set per-cluster
+    path: /grafana
+    pathType: Prefix
+    tls: []         # set per-cluster

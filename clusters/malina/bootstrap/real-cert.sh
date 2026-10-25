@@ -11,7 +11,8 @@
 # Domain -> TLS Secret mapping (must match the ingresses in git):
 #   kreciowo.pl -> demo/kreciowo-tls, jenkins/kreciowo-tls,
 #                  argocd/argocd-server-tls (+ removes the dummy Certificate
-#                  there so cert-manager does not fight the static secret)
+#                  there so cert-manager does not fight the static secret),
+#                  monitoring/kreciowo-tls (Grafana, spec 006)
 #   bibop.pl    -> demo/bibop-tls   (demo-symfony ingress)
 #
 # Hosts NOT covered by the bought certs (no wildcard SAN) keep the
@@ -24,7 +25,7 @@ FULLCHAIN="${2:?usage: real-cert.sh DOMAIN FULLCHAIN_PEM PRIVKEY_PEM}"
 PRIVKEY="${3:?usage: real-cert.sh DOMAIN FULLCHAIN_PEM PRIVKEY_PEM}"
 
 case "$DOMAIN" in
-  kreciowo.pl) TARGETS="demo:kreciowo-tls jenkins:kreciowo-tls argocd:argocd-server-tls" ;;
+  kreciowo.pl) TARGETS="demo:kreciowo-tls jenkins:kreciowo-tls argocd:argocd-server-tls monitoring:kreciowo-tls" ;;
   bibop.pl)    TARGETS="demo:bibop-tls" ;;
   *) echo "ERROR: unknown domain '$DOMAIN' — add it to the mapping in this script" >&2; exit 1 ;;
 esac

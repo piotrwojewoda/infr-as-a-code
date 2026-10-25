@@ -1,0 +1,9 @@
+# Environment values for the monitoring chart on cluster "malina" (spec 006).
+grafana:
+  ingress:
+    hosts:
+      - kreciowo.pl
+    tls:
+      - secretName: kreciowo-tls   # REAL cert (real-cert.sh, never in git)
+        hosts:
+          - kreciowo.pl
