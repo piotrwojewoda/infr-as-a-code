@@ -315,6 +315,7 @@ Regular maintenance:
 | Kaniko push `denied` / 403 on `/user/packages` | PAT lacks **Packages: read+write** | step 6.1, then `ghcr-secrets.sh` |
 | demo pod `ImagePullBackOff`, message `... ghcr.io/...: not found` | image not pushed to GHCR yet | run the pipeline once (step 8.7) |
 | Browser warns about TLS on `kreciowo.pl` | real cert not installed yet | step 8.5 (`real-cert.sh`) |
+| Grafana: „no data", datasource error | datasource URL ≠ actual Service name (chart 29.x names the server from `server.fullnameOverride`, NOT the root one) | keep `prometheus.server.fullnameOverride: prometheus-server` in `charts/monitoring/values.yaml` in sync with the datasource URL |
 | Everything lost (SD died) | — | start again at step 1; git + this document rebuild all |
 
 ---
