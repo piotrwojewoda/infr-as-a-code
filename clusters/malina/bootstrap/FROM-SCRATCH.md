@@ -4,6 +4,10 @@ This document describes how to rebuild the **malina** cluster from zero:
 from an empty SD card to a running k3s cluster with ArgoCD, Jenkins,
 cert-manager and the demo application deployed by GitOps.
 
+> **This is a living runbook.** Every change to the platform (bootstrap
+> scripts, pinned versions, secrets flow, network, TLS) MUST update this
+> document in the same commit (repository rule, see `AGENTS.md`).
+
 Everything below was executed and verified on a real rebuild
 (2026-10-25, Debian 13 "trixie", Raspberry Pi 5 8 GB). The pitfalls listed
 in each step are real errors we hit — do not skip the checks.
@@ -181,8 +185,8 @@ bash 10-install-platform.sh
 The script creates namespaces and secrets, then installs with Helm
 (each with `--wait`, on a Pi this takes 10–20 minutes total):
 
-1. cert-manager + ClusterIssuers + dummy TLS certificates
-   (self-signed until the real `kreciowo.pl` certificate is installed),
+1. cert-manager + ClusterIssuers + one dummy TLS certificate
+   (`demo.kreciowo.pl` only — the apex hosts use the real cert, step 8.5),
 2. ArgoCD (`argocd-values.yaml`),
 3. Jenkins (`jenkins-values.yaml`, admin password from the env var),
 4. Traefik config: HTTPS redirect, LAN-only admin UIs, public
@@ -209,8 +213,12 @@ cluster is managed by git: **every change is a commit**, never a manual
    `sudo rm /etc/sudoers.d/90-malina-bootstrap`
 2. **Change the temporary password** of the `malina` account
    (`passwd`) — it was only needed for first contact.
-3. ArgoCD admin password:
-   `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d`
+3. Admin UIs (LAN-only, spec 003):
+   - Jenkins: `https://kreciowo.pl/jenkins` — user `admin`, password =
+     `JENKINS_ADMIN_PASSWORD` from step 6.2,
+   - ArgoCD: `https://kreciowo.pl/argocd` — user `admin`, password:
+     `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d`
+     (change it in the UI afterwards, then delete that secret).
 4. DNS/hosts: point `kreciowo.pl` (and optionally `www.`) to
    `192.168.68.52`; forward ports 80/443 on the router for the public site.
 5. Install the real certificate (bought at home.pl, covers `kreciowo.pl` +
@@ -218,6 +226,8 @@ cluster is managed by git: **every change is a commit**, never a manual
    `intermediate.pem` into `fullchain.pem`, then on the Pi
    `bash clusters/malina/bootstrap/real-cert.sh fullchain.pem privkey.pem`.
    `demo.kreciowo.pl` stays on the self-signed dummy cert (no wildcard).
+   **Renewal**: same command with the new files (check the expiry with
+   `openssl s_client -connect 192.168.68.52:443 -servername kreciowo.pl`).
 6. GitHub webhook on the app repository:
    `https://kreciowo.pl/jenkins/github-webhook/`, content type
    `application/json`, secret = `GITHUB_WEBHOOK_SECRET` from step 6.
@@ -239,7 +249,50 @@ cluster is managed by git: **every change is a commit**, never a manual
 
 ---
 
-## 9. Troubleshooting — real failures and their fixes
+## 9. Current state (as built on 2026-10-25)
+
+Pinned versions (source of truth: `10-install-platform.sh`):
+
+| Component | Version |
+|-----------|---------|
+| k3s | v1.36.5+k3s1 (Traefik bundled, 80/443 on the node) |
+| Helm | 3.22.x |
+| cert-manager | v1.21.2 |
+| ArgoCD | chart 10.10.5 (app v3.5.5) |
+| Jenkins | chart 5.9.69 (2.580.1 LTS) |
+
+Hostnames (all path-based on the apex, spec 003):
+
+| URL | Access | TLS secret (namespace) |
+|-----|--------|------------------------|
+| `https://kreciowo.pl/` + `www.` | public | `kreciowo-tls` (demo) — REAL cert |
+| `https://kreciowo.pl/jenkins` | LAN only | `kreciowo-tls` (jenkins) — REAL cert |
+| `https://kreciowo.pl/jenkins/github-webhook/` | public (GitHub) | `kreciowo-tls` (jenkins) |
+| `https://kreciowo.pl/argocd` | LAN only | `argocd-server-tls` (argocd) — REAL cert |
+| `https://demo.kreciowo.pl` | public | `kreciowo-dummy-tls` (demo) — self-signed |
+
+Secrets created by bootstrap (names only — values never in git):
+
+| Secret | Namespace | Rotated with |
+|--------|-----------|--------------|
+| `jenkins-github` (user + PAT + webhook secret) | jenkins | re-apply via kubectl / re-run 10-install-platform.sh |
+| `ghcr-push` (docker config) | jenkins | `ghcr-secrets.sh` |
+| `ghcr-pull` (docker config) | demo | `ghcr-secrets.sh` |
+| `demo-db`, `demo-app` | demo | re-run 10-install-platform.sh with new env |
+| `kreciowo-tls` ×2, `argocd-server-tls` | demo, jenkins, argocd | `real-cert.sh` |
+
+Regular maintenance:
+
+- **GitHub PAT rotation/expiry**: `ghcr-secrets.sh` + re-apply `jenkins-github`.
+- **Certificate renewal** (home.pl DV, ~6-month validity): `real-cert.sh`.
+- **OS**: security updates install automatically; the Pi never reboots
+  itself — check `cat /var/run/reboot-required` monthly.
+- **Re-running bootstrap is safe**: all scripts are idempotent
+  (`helm upgrade --install`, secrets applied declaratively).
+
+---
+
+## 10. Troubleshooting — real failures and their fixes
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
@@ -248,16 +301,18 @@ cluster is managed by git: **every change is a commit**, never a manual
 | `Failed to install helm` right after first boot | network not fully up | re-run `00-install-k3s.sh` |
 | `Permission denied (publickey,password)` on SSH | wrong user or key not installed | user is `malina`; do step 2 |
 | Kaniko push `denied` / 403 on `/user/packages` | PAT lacks **Packages: read+write** | step 6.1, then `ghcr-secrets.sh` |
+| demo pod `ImagePullBackOff`, message `... ghcr.io/...: not found` | image not pushed to GHCR yet | run the pipeline once (step 8.7) |
+| Browser warns about TLS on `kreciowo.pl` | real cert not installed yet | step 8.5 (`real-cert.sh`) |
 | Everything lost (SD died) | — | start again at step 1; git + this document rebuild all |
 
 ---
 
-## 10. What is NOT in git (by design)
+## 11. What is NOT in git (by design)
 
 - GitHub PAT, webhook secret, DB and Jenkins passwords
   (Kubernetes Secrets created by `10-install-platform.sh`).
-- The real TLS certificate for `kreciowo.pl` (installed by the operator;
-  a self-signed dummy is used until then).
+- The real TLS certificate + key for `kreciowo.pl`
+  (installed by `real-cert.sh` from operator files).
 - The operator's private SSH key.
 
 Rebuild rule (Constitution I): **flash → steps 1–7 → one ArgoCD sync =

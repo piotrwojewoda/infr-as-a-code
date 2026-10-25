@@ -28,6 +28,9 @@ it is binding.
   ArgoCD multi-source applications (`$values` ref).
 - Spec Kit workflow is used for changes: `/speckit.specify` → `/speckit.plan`
   → `/speckit.tasks` → `/speckit.implement`. Specs live in `specs/`.
+- `clusters/malina/bootstrap/FROM-SCRATCH.md` is the living rebuild runbook.
+  Every change to the platform (bootstrap scripts, pinned versions, secrets
+  flow, network, TLS) MUST update it in the same commit.
 - Documentation language: simplified English.
 
 ## Verification before committing
