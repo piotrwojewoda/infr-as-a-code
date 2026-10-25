@@ -16,6 +16,10 @@ prometheus:
   kube-state-metrics:
     enabled: false
   server:
+    # The server Service/Deployment ignores the root fullnameOverride —
+    # chart 29.x uses .Values.server.fullnameOverride for those names.
+    # This name must stay in sync with the Grafana datasource URL below.
+    fullnameOverride: prometheus-server
     retention: 24h            # SD-card friendly (spec 006 notes)
     persistentVolume:
       enabled: true
