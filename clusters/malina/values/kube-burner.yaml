@@ -1,0 +1,10 @@
+# Safe starting point for one Raspberry Pi: five pods, at most 500m CPU total.
+# See specs/009-rancher-load-testing/quickstart.md for running a test.
+workload:
+  enabled: false
+  runID: "001"
+  iterations: 5
+  replicas: 1
+  qps: 2
+  burst: 2
+  cpuSeconds: 60

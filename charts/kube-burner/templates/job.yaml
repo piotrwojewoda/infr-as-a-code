@@ -1,0 +1,42 @@
+{{- if .Values.workload.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kube-burner-{{ .Values.workload.runID }}
+  labels:
+    app.kubernetes.io/name: kube-burner
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: {{ int .Values.workload.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kube-burner
+    spec:
+      restartPolicy: Never
+      serviceAccountName: kube-burner
+      containers:
+        - name: kube-burner
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["init", "--config=/config/config.yml"]
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        - name: config
+          configMap:
+            name: kube-burner-config
+{{- end }}

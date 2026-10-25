@@ -1,0 +1,38 @@
+image:
+  repository: quay.io/kube-burner/kube-burner
+  tag: v2.8.6
+  pullPolicy: IfNotPresent
+
+workloadImage:
+  repository: busybox
+  tag: 1.37.0
+  pullPolicy: IfNotPresent
+
+# Keep disabled during normal operation. Set enabled=true and use a new runID
+# for every run; changing an existing Job's pod template is not allowed in K8s.
+workload:
+  enabled: false
+  runID: "001"
+  iterations: 5
+  replicas: 1
+  qps: 2
+  burst: 2
+  cpuSeconds: 60
+  timeout: 10m
+  activeDeadlineSeconds: 600
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+podResources:
+  requests:
+    cpu: 50m
+    memory: 16Mi
+  limits:
+    cpu: 100m
+    memory: 32Mi

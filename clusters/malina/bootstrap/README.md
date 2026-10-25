@@ -28,6 +28,7 @@ export JENKINS_ADMIN_PASSWORD="$(openssl rand -hex 12)"
 bash 10-install-platform.sh
 
 # 4. GitOps: point ArgoCD at this repository
+#    This also deploys Rancher and the disabled-by-default kube-burner config.
 kubectl apply -f ../apps/root-app.yaml
 ```
 
@@ -68,8 +69,9 @@ secrets applied idempotently).
 - Key rotation: replace the file in `ssh-keys/`, commit, re-run
   `05-hardening.sh`. Removing a key deletes nothing — remove the line from
   `~/.ssh/authorized_keys` by hand if a key must be revoked.
-- The admin UIs (`/jenkins`, `/argocd`) are LAN-only after the platform is
-  installed; the demo page and `/jenkins/github-webhook/` stay public.
+- The admin UIs (`/jenkins`, `/argocd`, `rancher.kreciowo.pl`) are LAN-only
+  after the platform is installed; the demo page and
+  `/jenkins/github-webhook/` stay public.
   Details: `specs/003-security-hardening/contracts/exposure.md`.
 - Security updates install automatically, but the host never reboots itself:
   check `cat /var/run/reboot-required` monthly and reboot when asked.

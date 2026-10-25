@@ -46,6 +46,11 @@ results from Elasticsearch, so that the demo proves the full chain
 - **FR-005**: The demo documents are seeded lazily (index `documents`,
   stable IDs, `refresh=true`) — after a rebuild the first search
   recreates them; nothing to run by hand.
+- **FR-005b**: Indices are created **replica-free** (`number_of_replicas: 0`
+  + index template `demo-documents` for `documents*`) and an existing
+  replica-ful index is healed once — on a single node a replica can never
+  be assigned, which would keep the cluster `yellow` and the ArgoCD app
+  `Progressing` forever.
 - **FR-006**: Wiring lives in `charts/demo-symfony` (values-driven) so
   another cluster can disable it with `elasticsearch.enabled: false`.
 - **FR-007**: Tests must pass **without** ES (CI has no ES): the service

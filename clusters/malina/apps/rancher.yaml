@@ -1,0 +1,31 @@
+# Rancher management UI (spec 009). cert-manager is installed by bootstrap.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rancher
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  sources:
+    - repoURL: https://releases.rancher.com/server-charts/stable
+      chart: rancher
+      targetRevision: 2.15.2  # supports Kubernetes < 1.37; app v2.15.2
+      helm:
+        releaseName: rancher
+        valueFiles:
+          - $values/clusters/malina/values/rancher.yaml
+    - repoURL: https://github.com/piotrwojewoda/infr-as-a-code.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cattle-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

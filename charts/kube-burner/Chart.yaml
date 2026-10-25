@@ -1,0 +1,6 @@
+apiVersion: v2
+name: kube-burner
+description: On-demand Kubernetes API, scheduler and CPU load tests for the malina cluster
+type: application
+version: 0.1.0
+appVersion: "2.8.6"

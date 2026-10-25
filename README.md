@@ -11,6 +11,9 @@ GitOps repository for a single-node **k3s** cluster on a Raspberry Pi 5
 - **Demo app**: Symfony 8 + PHP 8.5 + PostgreSQL at `https://kreciowo.pl`
   (real cert; tools: `kreciowo.pl/jenkins/`, `kreciowo.pl/argocd/`;
   source: `piotrwojewoda/demo-symfony-k3s`)
+- **Management**: Rancher at `https://rancher.kreciowo.pl` (LAN only)
+- **Load testing**: on-demand kube-burner Jobs for Kubernetes API, scheduler
+  and bounded CPU load (disabled by default; spec 009)
 
 A merge to `main` of an application repository triggers the full chain via a
 GitHub webhook → build → push image to GHCR → bump `image.tag` here → ArgoCD
@@ -28,6 +31,9 @@ clusters/malina/
 ├── apps/                      ArgoCD Applications (root-app = entrypoint)
 └── values/                    Per-cluster values (image.tag bumped by CI)
 charts/demo-symfony/           Helm chart for the demo application
+charts/kube-burner/            Opt-in cluster load-test chart (spec 009)
+charts/monitoring/             Prometheus + Grafana umbrella chart
+specs/009-rancher-load-testing/ Rancher and load-test specification/runbook
 ```
 
 ## Quickstart

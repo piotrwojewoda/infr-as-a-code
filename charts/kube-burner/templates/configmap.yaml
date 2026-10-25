@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kube-burner-config
+  labels:
+    app.kubernetes.io/name: kube-burner
+data:
+  config.yml: |
+    global:
+      gc: true
+      timeout: {{ .Values.workload.timeout | quote }}
+      measurements:
+        - name: podLatency
+    jobs:
+      - name: malina-density
+        jobType: create
+        jobIterations: {{ int .Values.workload.iterations }}
+        namespacedIterations: false
+        namespace: kube-burner-load
+        qps: {{ int .Values.workload.qps }}
+        burst: {{ int .Values.workload.burst }}
+        preLoadImages: false
+        cleanup: true
+        waitWhenFinished: true
+        podWait: false
+        jobPause: {{ printf "%ds" (int .Values.workload.cpuSeconds) | quote }}
+        objects:
+          - objectTemplate: /config/pod.yml
+            replicas: {{ int .Values.workload.replicas }}
+            inputVars:
+              containerImage: {{ .Values.workloadImage.repository }}:{{ .Values.workloadImage.tag }}
+              imagePullPolicy: {{ .Values.workloadImage.pullPolicy }}
+              cpuSeconds: {{ int .Values.workload.cpuSeconds }}
+              cpuRequest: {{ .Values.podResources.requests.cpu | quote }}
+              memoryRequest: {{ .Values.podResources.requests.memory | quote }}
+              cpuLimit: {{ .Values.podResources.limits.cpu | quote }}
+              memoryLimit: {{ .Values.podResources.limits.memory | quote }}
+  pod.yml: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: load-{{"{{"}}.Iteration{{"}}"}}-{{"{{"}}.Replica{{"}}"}}
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+        - name: cpu-load
+          image: {{"{{"}}.containerImage{{"}}"}}
+          imagePullPolicy: {{"{{"}}.imagePullPolicy{{"}}"}}
+          command: ["/bin/sh", "-c"]
+          args:
+            - timeout {{"{{"}}.cpuSeconds{{"}}"}}s sh -c 'while :; do :; done'
+          resources:
+            requests:
+              cpu: {{"{{"}}.cpuRequest{{"}}"}}
+              memory: {{"{{"}}.memoryRequest{{"}}"}}
+            limits:
+              cpu: {{"{{"}}.cpuLimit{{"}}"}}
+              memory: {{"{{"}}.memoryLimit{{"}}"}}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault

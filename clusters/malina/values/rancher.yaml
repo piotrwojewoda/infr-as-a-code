@@ -1,0 +1,22 @@
+# Single-node, arm64-compatible Rancher installation (spec 009).
+hostname: rancher.kreciowo.pl
+replicas: 1
+addLocal: "true"
+bootstrapPassword: ""  # random; read it from the initial Rancher pod logs
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 2Gi
+ingress:
+  ingressClassName: traefik
+  extraAnnotations:
+    # Admin UIs must not be exposed to the Internet (spec 003).
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-lan-only@kubernetescrd
+  tls:
+    # The bought certificate has no wildcard SAN for rancher.kreciowo.pl.
+    # cert-manager therefore issues Rancher's own self-signed certificate.
+    source: rancher
+    secretName: tls-rancher-ingress

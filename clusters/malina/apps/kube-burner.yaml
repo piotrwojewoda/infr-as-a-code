@@ -1,0 +1,31 @@
+# On-demand Kubernetes API/scheduler/CPU load generator (spec 009).
+# The workload Job is disabled by default; enable it in the environment values.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-burner
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/piotrwojewoda/infr-as-a-code.git
+      targetRevision: main
+      path: charts/kube-burner
+      helm:
+        releaseName: kube-burner
+        valueFiles:
+          - $values/clusters/malina/values/kube-burner.yaml
+    - repoURL: https://github.com/piotrwojewoda/infr-as-a-code.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: load-testing
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

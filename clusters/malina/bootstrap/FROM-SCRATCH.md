@@ -2,17 +2,19 @@
 
 This document describes how to rebuild the **malina** cluster from zero:
 from an empty SD card to a running k3s cluster with ArgoCD, Jenkins,
-cert-manager and the demo application deployed by GitOps.
+cert-manager, Rancher, on-demand load testing and the demo application deployed
+by GitOps.
 
 > **This is a living runbook.** Every change to the platform (bootstrap
 > scripts, pinned versions, secrets flow, network, TLS) MUST update this
 > document in the same commit (repository rule, see `AGENTS.md`).
 
-Everything below was executed and verified on a real rebuild
-(2026-10-25, Debian 13 "trixie", Raspberry Pi 5 8 GB). The pitfalls listed
-in each step are real errors we hit — do not skip the checks.
+The base procedure was executed and verified on a real rebuild
+(2026-10-25, Debian 13 "trixie", Raspberry Pi 5 8 GB). Rancher and kube-burner
+were added later through GitOps; run the checks in §8 after their first sync.
+The pitfalls listed in each step are real errors we hit — do not skip the checks.
 
-Time needed: about 45–60 minutes (mostly downloads and image pulls).
+Time needed: about 60–75 minutes (mostly downloads and image pulls).
 
 ---
 
@@ -201,9 +203,10 @@ kubectl apply -f ~/infr-as-a-code/clusters/malina/apps/root-app.yaml
 ```
 
 The root application watches `clusters/malina/apps/` in this repository
-and deploys everything found there (app-of-apps). From this moment the
-cluster is managed by git: **every change is a commit**, never a manual
-`kubectl`/`helm` edit.
+and deploys everything found there (app-of-apps), including Rancher and the
+kube-burner configuration. The load-test Job itself is disabled by default.
+From this moment the cluster is managed by git: **every change is a commit**,
+never a manual `kubectl`/`helm` edit.
 
 ---
 
@@ -219,8 +222,13 @@ cluster is managed by git: **every change is a commit**, never a manual
    - ArgoCD: `https://kreciowo.pl/argocd` — user `admin`, password:
      `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d`
      (change it in the UI afterwards, then delete that secret).
-4. DNS/hosts: point `kreciowo.pl` (and optionally `www.`) to
-   `192.168.68.52`; forward ports 80/443 on the router for the public site.
+   - Rancher: `https://rancher.kreciowo.pl` — user `admin`, generated initial
+     password: `kubectl -n cattle-system logs -l app=rancher | grep -i 'Bootstrap Password:'`.
+     Set a permanent password in the UI and store it in a password manager.
+     The `local` k3s cluster is registered automatically.
+4. DNS/hosts: point `kreciowo.pl` (and optionally `www.`) and
+   `rancher.kreciowo.pl` to `192.168.68.52`; forward ports 80/443 on the
+   router for the public site. Rancher remains LAN-only through Traefik.
 5. Install the real certificates (bought at home.pl, one per domain —
    `kreciowo.pl` and `bibop.pl`, each covering apex + `www` only):
    concatenate `certificate.pem` + `intermediate.pem` into `fullchain.pem`,
@@ -238,16 +246,28 @@ cluster is managed by git: **every change is a commit**, never a manual
    green build == the new pod is live; watch with
    `kubectl -n demo get pods -w`).
 
+### Optional: run a Kubernetes load test
+
+Use [spec 009 quickstart](../../../specs/009-rancher-load-testing/quickstart.md).
+In short: enable the Job and give it a new `runID` in
+`clusters/malina/values/kube-burner.yaml`, commit and push, then read
+`kubectl -n load-testing logs job/kube-burner-<runID>`. The default five pods
+consume CPU for 60 seconds and kube-burner deletes the `kube-burner-load`
+namespace. Disable the Job through git after collecting its logs. Never start
+an ad-hoc load Job outside GitOps.
+
 ### Verification checklist
 
 | Check | Command | Expected |
 |-------|---------|----------|
 | Node | `kubectl get nodes` | `Ready` |
-| Platform pods | `kubectl get pods -A` | all `Running` (cert-manager, argocd, jenkins) |
+| Platform pods | `kubectl get pods -A` | all `Running` (cert-manager, argocd, jenkins, rancher) |
 | Ingress ports | `nc -zv 192.168.68.52 80` / `443` | open |
 | Firewall | `sudo ufw status` | only 22, 80, 443 + cluster-internal |
 | Old registry | `nc -zv 192.168.68.52 30500` | **refused** (gone since spec 004) |
 | ArgoCD apps | `kubectl -n argocd get applications` | `root-app` + children, `Synced/Healthy` |
+| Rancher | `kubectl -n cattle-system get deploy rancher` | `AVAILABLE 1`; UI works only from LAN |
+| Load test default | `kubectl -n load-testing get jobs` | `No resources found` (Job is opt-in) |
 | Elasticsearch | `kubectl -n demo get elasticsearch demo` | `Ready`, health `green` |
 | ES authentication | password `kubectl -n demo get secret demo-es-elastic-user -o jsonpath='{.data.elastic}' \| base64 -d` | `curl --cacert demo-es-http-certs-public/ca.crt -u elastic:… https://demo-es-http:9200` returns version 9.5.5 |
 | App ↔ ES | `curl -s https://kreciowo.pl/api/elastic` | `{"status":"ok","cluster":"demo","version":"9.5.5"}` |
@@ -259,7 +279,7 @@ cluster is managed by git: **every change is a commit**, never a manual
 
 ## 9. Current state (as built on 2026-10-25)
 
-Pinned versions (source of truth: `10-install-platform.sh`):
+Pinned versions (source of truth: bootstrap and ArgoCD applications):
 
 | Component | Version |
 |-----------|---------|
@@ -272,8 +292,11 @@ Pinned versions (source of truth: `10-install-platform.sh`):
 | Grafana | chart 10.5.15 (12.3.1), PVC 500 Mi (spec 006) |
 | ECK operator | chart 3.5.0, ns `elastic-system` (spec 007) |
 | Elasticsearch | 9.5.5, single node, heap 512 MB, PVC 4 Gi, ns `demo` (spec 007) |
+| Rancher | chart 2.15.2 (app v2.15.2), one replica, ns `cattle-system` (spec 009) |
+| kube-burner | v2.8.6, opt-in Job, ns `load-testing` (spec 009) |
+| Load-test workload | BusyBox 1.37.0, five CPU pods for 60s by default (spec 009) |
 
-Hostnames (all path-based on the apex, spec 003):
+Platform URLs (specs 003 and 009):
 
 | URL | Access | TLS secret (namespace) |
 |-----|--------|------------------------|
@@ -283,6 +306,7 @@ Hostnames (all path-based on the apex, spec 003):
 | `https://kreciowo.pl/jenkins/github-webhook/` | public (GitHub) | `kreciowo-tls` (jenkins) |
 | `https://kreciowo.pl/argocd` | LAN only | `argocd-server-tls` (argocd) — REAL cert |
 | `https://kreciowo.pl/grafana` | LAN only | `kreciowo-tls` (monitoring) — REAL cert |
+| `https://rancher.kreciowo.pl` | LAN only | `tls-rancher-ingress` (cattle-system) — self-signed |
 | `https://demo.kreciowo.pl` | public | `kreciowo-dummy-tls` (demo) — self-signed |
 | `https://kreciowo.pl/search` | public | `kreciowo-tls` (demo) — REAL cert (spec 008) |
 | `https://kreciowo.pl/api/elastic` | public | JSON: `status`, cluster name, ES version (spec 008) |
@@ -302,6 +326,7 @@ Secrets created by bootstrap (names only — values never in git):
 | `grafana-admin` | monitoring | re-run 10-install-platform.sh with `GRAFANA_ADMIN_PASSWORD` |
 | `demo-es-elastic-user` (ES password) | demo | auto-generated by ECK — rotate: `kubectl -n demo get secret demo-es-elastic-user -o jsonpath='{.data.elastic}' \| base64 -d` |
 | `bibop-tls` | demo | `real-cert.sh bibop.pl …` |
+| `tls-rancher-ingress`, `tls-rancher` | cattle-system | generated by Rancher/cert-manager |
 
 Regular maintenance:
 
@@ -328,6 +353,8 @@ Regular maintenance:
 | Grafana: „no data", datasource error | datasource URL ≠ actual Service name (chart 29.x names the server from `server.fullnameOverride`, NOT the root one) | keep `prometheus.server.fullnameOverride: prometheus-server` in `charts/monitoring/values.yaml` in sync with the datasource URL |
 | ArgoCD app with an external Helm chart stuck in `Unknown` / `failed to pull OCI chart` | `repoURL` written without scheme (`helm.elastic.co`) — ArgoCD treats it as an OCI registry | always write the full URL: `https://helm.elastic.co` |
 | `/search` says „Search is temporarily unavailable", `/api/elastic` → 503 | ECK Secrets not created yet / ES not Ready / password rotated | wait for `kubectl -n demo get elasticsearch demo` = Ready; secrets are mounted `optional: true`, the app recovers without a restart |
+| ArgoCD app `elasticsearch` shows **Progressing** while the CR is `Ready` | cluster health `yellow`: a replica can never be assigned on a single node, so one shard stays unassigned | app creates/repairs indices with `number_of_replicas: 0` (index template `demo-documents`); manual fix: `PUT /documents/_settings {"index":{"number_of_replicas":0}}` |
+| ECK condition `ResourcesAwareManagement=False` | `requests.memory` ≠ `limits.memory` in the ES pod template | harmless on this size — set them equal in `charts/elasticsearch/values.yaml` if you want memory-aware node roles |
 | `demo-symfony` pod stuck `CreateContainerConfigError` | a mounted Secret is missing **and** was made mandatory | keep both ES volumes `optional: true` in `charts/demo-symfony/templates/deployment.yaml` |
 | Everything lost (SD died) | — | start again at step 1; git + this document rebuild all |
 
@@ -340,6 +367,7 @@ Regular maintenance:
 - The real TLS certificate + key for `kreciowo.pl`
   (installed by `real-cert.sh` from operator files).
 - The operator's private SSH key.
+- Rancher bootstrap/permanent admin passwords and generated TLS private keys.
 
 Rebuild rule (Constitution I): **flash → steps 1–7 → one ArgoCD sync =
 the whole platform back.**
