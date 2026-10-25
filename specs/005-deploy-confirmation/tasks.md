@@ -13,8 +13,9 @@
 - [x] T004 app repo `demo-symfony-k3s/Jenkinsfile`: pass `deploy:` params
 - [x] T005 Docs: FROM-SCRATCH.md §9 pipeline row + §8.7; pointer notes in
   spec 001/002 pipeline contracts
-- [ ] T006 Live: re-run platform script fragment (apply RBAC), push infra
+- [x] T006 Live: re-run platform script fragment (apply RBAC), push infra
   + app, webhook build goes green including the Deploy stage
+  (build #3, 2026-10-25: console shows the tag wait + rollout confirmation)
 
 ## Verification
 
