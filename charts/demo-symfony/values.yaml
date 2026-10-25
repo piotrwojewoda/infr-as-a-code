@@ -29,6 +29,18 @@ ingress:
 # References to the bootstrap-created Secret holding APP_SECRET + DATABASE_URL.
 envSecretName: demo-app
 
+# Elasticsearch wiring (spec 008). The ECK cluster `demo` (spec 007) runs in
+# the same namespace; its password and CA come from ECK-generated Secrets
+# mounted as files (never in git). Set `enabled: false` to disable search.
+elasticsearch:
+  enabled: true
+  url: https://demo-es-http:9200
+  user: elastic
+  credentialsSecret: demo-es-elastic-user
+  credentialsKey: elastic
+  caSecret: demo-es-http-certs-public
+  caKey: ca.crt
+
 resources:
   requests: { cpu: 50m,  memory: 128Mi }
   limits:   { cpu: 300m, memory: 256Mi }

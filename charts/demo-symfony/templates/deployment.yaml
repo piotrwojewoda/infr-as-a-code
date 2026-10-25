@@ -39,6 +39,29 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.envSecretName }}
                   key: DATABASE_URL
+            {{- if .Values.elasticsearch.enabled }}
+            # Elasticsearch (spec 008): password + CA are FILES mounted from
+            # ECK Secrets, read at request time (Secret rotation needs no
+            # restart; both mounts are optional so the pod starts even before
+            # the ES cluster is Ready).
+            - name: ELASTICSEARCH_URL
+              value: {{ .Values.elasticsearch.url | quote }}
+            - name: ELASTICSEARCH_USER
+              value: {{ .Values.elasticsearch.user | quote }}
+            - name: ELASTICSEARCH_PASSWORD_FILE
+              value: "/etc/es-credentials/{{ .Values.elasticsearch.credentialsKey }}"
+            - name: ELASTICSEARCH_CA
+              value: "/etc/es-ca/{{ .Values.elasticsearch.caKey }}"
+            {{- end }}
+          {{- if .Values.elasticsearch.enabled }}
+          volumeMounts:
+            - name: es-credentials
+              mountPath: /etc/es-credentials
+              readOnly: true
+            - name: es-ca
+              mountPath: /etc/es-ca
+              readOnly: true
+          {{- end }}
           readinessProbe:
             httpGet:
               path: {{ .Values.probes.path }}
@@ -53,3 +76,22 @@ spec:
             periodSeconds: 30
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.elasticsearch.enabled }}
+      volumes:
+        # ECK-generated Secrets (spec 007) — optional: they exist only once
+        # Elasticsearch has been reconciled; the app waits gracefully.
+        - name: es-credentials
+          secret:
+            secretName: {{ .Values.elasticsearch.credentialsSecret }}
+            optional: true
+            items:
+              - key: {{ .Values.elasticsearch.credentialsKey }}
+                path: {{ .Values.elasticsearch.credentialsKey }}
+        - name: es-ca
+          secret:
+            secretName: {{ .Values.elasticsearch.caSecret }}
+            optional: true
+            items:
+              - key: {{ .Values.elasticsearch.caKey }}
+                path: {{ .Values.elasticsearch.caKey }}
+      {{- end }}

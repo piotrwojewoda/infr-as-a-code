@@ -250,6 +250,9 @@ cluster is managed by git: **every change is a commit**, never a manual
 | ArgoCD apps | `kubectl -n argocd get applications` | `root-app` + children, `Synced/Healthy` |
 | Elasticsearch | `kubectl -n demo get elasticsearch demo` | `Ready`, health `green` |
 | ES authentication | password `kubectl -n demo get secret demo-es-elastic-user -o jsonpath='{.data.elastic}' \| base64 -d` | `curl --cacert demo-es-http-certs-public/ca.crt -u elastic:… https://demo-es-http:9200` returns version 9.5.5 |
+| App ↔ ES | `curl -s https://kreciowo.pl/api/elastic` | `{"status":"ok","cluster":"demo","version":"9.5.5"}` |
+| Search demo | open `https://kreciowo.pl/search?q=malina` | result cards + hit count |
+| ES secrets mounted | `kubectl -n demo exec deploy/demo-symfony -- ls /etc/es-credentials /etc/es-ca` | `elastic`, `ca.crt` |
 | Pipeline | push to app repo `main` | build green incl. `Deploy` stage + new demo pod from `ghcr.io` |
 
 ---
@@ -281,6 +284,8 @@ Hostnames (all path-based on the apex, spec 003):
 | `https://kreciowo.pl/argocd` | LAN only | `argocd-server-tls` (argocd) — REAL cert |
 | `https://kreciowo.pl/grafana` | LAN only | `kreciowo-tls` (monitoring) — REAL cert |
 | `https://demo.kreciowo.pl` | public | `kreciowo-dummy-tls` (demo) — self-signed |
+| `https://kreciowo.pl/search` | public | `kreciowo-tls` (demo) — REAL cert (spec 008) |
+| `https://kreciowo.pl/api/elastic` | public | JSON: `status`, cluster name, ES version (spec 008) |
 
 Both apex domains serve the same demo-symfony app (one ingress, multiple
 hosts — see `clusters/malina/values/demo-symfony.yaml`).
@@ -322,6 +327,8 @@ Regular maintenance:
 | Browser warns about TLS on `kreciowo.pl` | real cert not installed yet | step 8.5 (`real-cert.sh`) |
 | Grafana: „no data", datasource error | datasource URL ≠ actual Service name (chart 29.x names the server from `server.fullnameOverride`, NOT the root one) | keep `prometheus.server.fullnameOverride: prometheus-server` in `charts/monitoring/values.yaml` in sync with the datasource URL |
 | ArgoCD app with an external Helm chart stuck in `Unknown` / `failed to pull OCI chart` | `repoURL` written without scheme (`helm.elastic.co`) — ArgoCD treats it as an OCI registry | always write the full URL: `https://helm.elastic.co` |
+| `/search` says „Search is temporarily unavailable", `/api/elastic` → 503 | ECK Secrets not created yet / ES not Ready / password rotated | wait for `kubectl -n demo get elasticsearch demo` = Ready; secrets are mounted `optional: true`, the app recovers without a restart |
+| `demo-symfony` pod stuck `CreateContainerConfigError` | a mounted Secret is missing **and** was made mandatory | keep both ES volumes `optional: true` in `charts/demo-symfony/templates/deployment.yaml` |
 | Everything lost (SD died) | — | start again at step 1; git + this document rebuild all |
 
 ---
