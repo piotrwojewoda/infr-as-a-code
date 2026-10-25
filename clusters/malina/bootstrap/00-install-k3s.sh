@@ -46,6 +46,7 @@ fi
 KINE_OVERRIDE="/etc/systemd/system/k3s.service.d/90-kine.conf"
 if ! sudo grep -qx 'Environment=KINE_COMPACT_TIMEOUT=5m' "$KINE_OVERRIDE" 2>/dev/null; then
   echo "==> Datastore resilience: KINE_COMPACT_TIMEOUT=5m"
+  sudo install -d -m 0755 "$(dirname "$KINE_OVERRIDE")"
   printf '[Service]\nEnvironment=KINE_COMPACT_TIMEOUT=5m\n' | sudo tee "$KINE_OVERRIDE" >/dev/null
   sudo systemctl daemon-reload
   sudo systemctl restart k3s

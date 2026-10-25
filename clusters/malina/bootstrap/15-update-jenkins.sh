@@ -16,4 +16,9 @@ helm upgrade --install jenkins jenkinsci/jenkins \
   --version "$JENKINS_CHART_VERSION" \
   --reuse-values \
   -f jenkins-values.yaml \
-  --wait --timeout 10m
+  --wait=false
+
+# A failed old pod can block the StatefulSet from advancing to the new pod
+# template. Recreate only the controller pod; its PVC and all Secrets remain.
+kubectl -n jenkins delete pod jenkins-0 --ignore-not-found
+kubectl -n jenkins rollout status statefulset/jenkins --timeout=10m
